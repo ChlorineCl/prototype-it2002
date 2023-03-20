@@ -18,6 +18,15 @@ app = Flask(__name__)
 # ? Just enabling the flask app to be able to communicate with any request source
 CORS(app)
 
+# Creating our home page which is where the posts would show up
+
+
+@app.route("/")
+@app.route("/home")
+def home():
+    return "<h1>Home Page</h1>"
+
+
 # ? building our `engine` object from a custom configuration string
 # ? for this project, we'll use the default postgres user, on a database called `postgres` deployed on the same machine
 YOUR_POSTGRES_PASSWORD = "postgres"
@@ -238,9 +247,12 @@ def generate_create_table_statement(table: Dict):
     statement = statement[:-1] + ");"
     return sqlalchemy.text(statement)
 
-# ? This method can be used by waitress-serve CLI 
+# ? This method can be used by waitress-serve CLI
+
+
 def create_app():
-   return app
+    return app
+
 
 # ? The port where the debuggable DB management API is served
 PORT = 2222
