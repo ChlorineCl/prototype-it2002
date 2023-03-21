@@ -33,12 +33,12 @@
                     </button>
                     <div class="collapse navbar-collapse" id="navbarToggle">
                         <div class="navbar-nav mr-auto">
-                            <a class="nav-item nav-link" href="/">Home</a>
+                            <a class="nav-item nav-link" href="{{ url_for('home') }}">Home</a>
                         </div>
                         <!-- Navbar Right Side -->
                         <div class="navbar-nav">
-                            <a class="nav-item nav-link" href="/login">Login</a>
-                            <a class="nav-item nav-link" href="/register"
+                            <a class="nav-item nav-link" href="{{ url_for('login') }}">Login</a>
+                            <a class="nav-item nav-link" href="{{ url_for('register') }}"
                                 >Register</a
                             >
                         </div>
@@ -52,6 +52,15 @@
                 <p>Templates and css are in credit to Corey M Schafer and taken from his github
                     CoreyMSchafer under code_snippets
                 </p>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="alert alert-{{ category }}">
+                        {{ message }}
+                      </div>
+                    {% endfor %} 
+                  {% endif %} 
+                {% endwith %}
                 {% block content %}{% endblock %}
               </div>
               <div class="col-md-4">

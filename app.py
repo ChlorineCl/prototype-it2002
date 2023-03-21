@@ -5,15 +5,21 @@ import json
 # ? flask - library used to write REST API endpoints (functions in simple words) to communicate with the client (view) application's interactions
 # ? request - is the default object used in the flask endpoints to get data from the requests
 # ? Response - is the default HTTP Response object, defining the format of the returned data by this api
-from flask import Flask, render_template, request, Response, url_for
+from flask import Flask, render_template, request, Response, url_for, flash, redirect
 # ? sqlalchemy is the main library we'll use here to interact with PostgresQL DBMS
 import sqlalchemy
 # ? Just a class to help while coding by suggesting methods etc. Can be totally removed if wanted, no change
 from typing import Dict
 
+# Importing our register and login forms
+from forms import RegistrationForm, LoginForm
+
 
 # ? web-based applications written in flask are simply called apps are initialized in this format from the Flask base class. You may see the contents of `__name__` by hovering on it while debugging if you're curious
 app = Flask(__name__)
+
+# Setting our secret key
+app.config['SECRET_KEY'] = '375a627673770da29deabd8de4ec1711'
 
 # ? Just enabling the flask app to be able to communicate with any request source
 CORS(app)
@@ -23,16 +29,18 @@ post = [
     {
         'post_id': '1',
         'owner': 'chenleiothers@gmail.com',
-        'isbn10': '445787070-6',
+        'isbn10': '978699384-5',
         'availability': 'true',
-        'date_posted': '2022-10-01'
+        'date_posted': '2022-10-01',
+        'title': 'Harry Potter'
     },
     {
         'post_id': '2',
         'owner': 'jiayue@gmail.com',
-        'isbn10': '445787070-7',
+        'isbn10': '481222564-7',
         'availability': 'true',
-        'date_posted': '2022-10-02'
+        'date_posted': '2022-10-02',
+        'title': 'Silence of the Lambs'
     }
 ]
 
@@ -43,6 +51,27 @@ post = [
 @app.route("/home")
 def home():
     return render_template('home.html', post=post, title='Home')
+
+# Creating our register route
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        flash(f'Account created for {form.username.data} successfully!', 'success')
+        return redirect(url_for('home'))
+    return render_template('register.html', title='Registration', form=form)
+
+# Creating our login route
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        if form.email.data == 'admin@nus.edu.sg' and form.password.data == 'group8mwjyvcl':
+            flash('Login successful!', 'success')
+            return redirect(url_for('home'))
+        else:
+            flash('Login Unsuccessful. Kindly check whether you have input the correct email and/or password', 'danger')
+    return render_template('login.html', title='Login', form=form)
 
 
 # ? building our `engine` object from a custom configuration string
