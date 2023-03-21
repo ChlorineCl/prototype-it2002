@@ -5,7 +5,7 @@ import json
 # ? flask - library used to write REST API endpoints (functions in simple words) to communicate with the client (view) application's interactions
 # ? request - is the default object used in the flask endpoints to get data from the requests
 # ? Response - is the default HTTP Response object, defining the format of the returned data by this api
-from flask import Flask, request, Response
+from flask import Flask, render_template, request, Response, url_for
 # ? sqlalchemy is the main library we'll use here to interact with PostgresQL DBMS
 import sqlalchemy
 # ? Just a class to help while coding by suggesting methods etc. Can be totally removed if wanted, no change
@@ -18,13 +18,31 @@ app = Flask(__name__)
 # ? Just enabling the flask app to be able to communicate with any request source
 CORS(app)
 
+# The post
+post = [
+    {
+        'post_id': '1',
+        'owner': 'chenleiothers@gmail.com',
+        'isbn10': '445787070-6',
+        'availability': 'true',
+        'date_posted': '2022-10-01'
+    },
+    {
+        'post_id': '2',
+        'owner': 'jiayue@gmail.com',
+        'isbn10': '445787070-7',
+        'availability': 'true',
+        'date_posted': '2022-10-02'
+    }
+]
+
 # Creating our home page which is where the posts would show up
 
 
 @app.route("/")
 @app.route("/home")
 def home():
-    return "<h1>Home Page</h1>"
+    return render_template('home.html', post=post, title='Home')
 
 
 # ? building our `engine` object from a custom configuration string
