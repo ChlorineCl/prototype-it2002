@@ -1,4 +1,5 @@
 # ? Cross-origin Resource Sharing - here it allows the view and core applications deployed on different ports to communicate. No need to know anything about it since it's only used once
+from multiprocessing import connection
 from flask_cors import CORS, cross_origin
 # ? Python's built-in library for JSON operations. Here, is used to convert JSON strings into Python dictionaries and vice-versa
 import json
@@ -10,10 +11,14 @@ from flask import Flask, render_template, request, Response, url_for, flash, red
 import sqlalchemy
 # ? Just a class to help while coding by suggesting methods etc. Can be totally removed if wanted, no change
 from typing import Dict
+# Importing datetime to work with date
+from datetime import date
 
 # Importing our register and login forms
 from forms import RegistrationForm, LoginForm
 
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 # ? web-based applications written in flask are simply called apps are initialized in this format from the Flask base class. You may see the contents of `__name__` by hovering on it while debugging if you're curious
 app = Flask(__name__)
@@ -21,8 +26,22 @@ app = Flask(__name__)
 # Setting our secret key
 app.config['SECRET_KEY'] = '375a627673770da29deabd8de4ec1711'
 
+
 # ? Just enabling the flask app to be able to communicate with any request source
 CORS(app)
+
+# ? building our `engine` object from a custom configuration string
+# ? for this project, we'll use the default postgres user, on a database called `postgres` deployed on the same machine
+
+YOUR_POSTGRES_PASSWORD = "postgres"
+connection_string = f"postgresql://postgres:{YOUR_POSTGRES_PASSWORD}@localhost/postgres"
+engine = sqlalchemy.create_engine(
+    "postgresql://postgres:postgres@localhost/postgres",
+    future=True
+)
+
+# ? `db` - the database (connection) object will be used for executing queries on the connected database named `postgres` in our deployed Postgres DBMS
+db = engine.connect()
 
 # The post
 post = [
@@ -57,8 +76,15 @@ def home():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        flash(f'Account created for {form.username.data} successfully!', 'success')
-        return redirect(url_for('home'))
+        try:
+            insertion_command = sqlalchemy.text(f"INSERT INTO users (email, username, password, creation_date) VALUES ('{form.data['email']}', '{form.data['username']}', '{form.data['password']}', '{date.today()}');")
+            db.execute(insertion_command)
+            db.commit()
+            flash(f'Account created for {form.username.data} successfully!', 'success')
+            return redirect(url_for('home'))
+        except Exception as e:
+            db.rollback()
+            return Response(str(e), 403)
     return render_template('register.html', title='Registration', form=form)
 
 # Creating our login route
@@ -66,24 +92,23 @@ def register():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        if form.email.data == 'admin@nus.edu.sg' and form.password.data == 'group8mwjyvcl':
-            flash('Login successful!', 'success')
-            return redirect(url_for('home'))
-        else:
-            flash('Login Unsuccessful. Kindly check whether you have input the correct email and/or password', 'danger')
+        try:
+            retrieval_command = sqlalchemy.text(f"""SELECT * FROM users u WHERE u.email ='{form.data['email']}';""") 
+            res = db.execute(retrieval_command)
+            db.commit()
+            data = generate_table_return_result(res)
+            if data == form.data['password']:
+                flash('Login successful!', 'success')
+                return redirect(url_for('home'))
+            else:
+                flash(f'{res}Login Unsuccessful. Kindly check whether you have input the correct email and/or password', 'danger')
+        except Exception as e:
+            db.rollback()
+            return Response(str(e), 403)
     return render_template('login.html', title='Login', form=form)
 
 
-# ? building our `engine` object from a custom configuration string
-# ? for this project, we'll use the default postgres user, on a database called `postgres` deployed on the same machine
-YOUR_POSTGRES_PASSWORD = "postgres"
-connection_string = f"postgresql://postgres:{YOUR_POSTGRES_PASSWORD}@localhost/postgres"
-engine = sqlalchemy.create_engine(
-    "postgresql://postgres:postgres@localhost/postgres"
-)
 
-# ? `db` - the database (connection) object will be used for executing queries on the connected database named `postgres` in our deployed Postgres DBMS
-db = engine.connect()
 
 # ? A dictionary containing
 data_types = {
@@ -312,3 +337,9 @@ if __name__ == "__main__":
     # ? If you are willing to use waitress-serve command, please add `/home/sadm/.local/bin` to your ~/.bashrc
     # from waitress import serve
     # serve(app, host="0.0.0.0", port=PORT)
+
+
+
+
+
+

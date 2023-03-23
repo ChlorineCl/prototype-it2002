@@ -1,0 +1,34 @@
+# database 
+# app.config['SQLALCHEMY_DATABASE_URI']='postgresql://postgres:postgres@it2002-08-i.comp.nus.edu.sg/postgres'
+# db=SQLAlchemy(app)
+
+# class Postgres(db.Model):
+#   __tablename__='users'
+#   email=db.Column(db.Integer,primary_key=True)
+#   username=db.Column(db.String(40))
+#   password=db.Column(db.String(40))
+#   creation_date=db.Column(db.String(40))
+
+#   def __init__(self,email,username,password,creation_date):
+#     self.email=email
+#     self.username=username
+#     self.password=password
+#     self.creation_date=creation_date
+
+# @app.route('/')
+# def index():
+#   return render_template('index.html')
+  
+# @app.route('/submit', methods=['POST'])
+# def submit():
+#   if request.method =='POST':
+#     email= request.form['email']
+#     username=request.form['username']
+#     password=request.form['password']
+#     creation_date=request.form['creation_date']
+
+#     user=Postgres(email,username,password,creation_date)
+#     db.session.add(user)
+#     db.session.commit()
+
+#   return render_template('success.html', data=fname)
