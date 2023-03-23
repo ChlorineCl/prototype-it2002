@@ -92,19 +92,23 @@ def register():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        try:
-            retrieval_command = sqlalchemy.text(f"""SELECT * FROM users u WHERE u.email ='{form.data['email']}';""") 
-            res = db.execute(retrieval_command)
-            db.commit()
-            data = generate_table_return_result(res)
-            if data == form.data['password']:
-                flash('Login successful!', 'success')
-                return redirect(url_for('home'))
-            else:
-                flash(f'{res}Login Unsuccessful. Kindly check whether you have input the correct email and/or password', 'danger')
-        except Exception as e:
-            db.rollback()
-            return Response(str(e), 403)
+        # try:
+        #     retrieval_command = sqlalchemy.text(f"""SELECT * FROM users u WHERE u.email ='{form.data['email']}';""") 
+        #     res = db.execute(retrieval_command)
+        #     db.commit()
+        #     if retrieved_password == form.data['password']:
+        #         flash('Login successful!', 'success')
+        #         return redirect(url_for('home'))
+        #     else:
+        #         flash(f'{res}Login Unsuccessful. Kindly check whether you have input the correct email and/or password', 'danger')
+        # except Exception as e:
+        #     db.rollback()
+        #     return Response(str(e), 403)
+        if form.email.data == 'admin@nus.edu.sg' and form.password.data == 'group8mwjyvcl':
+            flash('Login successful!', 'success')
+            return redirect(url_for('home'))
+        else:
+            flash('Login Unsuccessful. Kindly check whether you have input the correct email and/or password', 'danger')
     return render_template('login.html', title='Login', form=form)
 
 
@@ -327,7 +331,7 @@ def create_app():
 
 
 # ? The port where the debuggable DB management API is served
-PORT = 2222
+PORT = 2223
 # ? Running the flask app on the localhost/0.0.0.0, port 2222
 # ? Note that you may change the port, then update it in the view application too to make it work (don't if you don't have another application occupying it)
 if __name__ == "__main__":
