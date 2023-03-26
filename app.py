@@ -92,26 +92,20 @@ def register():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        # try:
-        #     retrieval_command = sqlalchemy.text(f"""SELECT * FROM users u WHERE u.email ='{form.data['email']}';""") 
-        #     res = db.execute(retrieval_command)
-        #     db.commit()
-        #     if retrieved_password == form.data['password']:
-        #         flash('Login successful!', 'success')
-        #         return redirect(url_for('home'))
-        #     else:
-        #         flash(f'{res}Login Unsuccessful. Kindly check whether you have input the correct email and/or password', 'danger')
-        # except Exception as e:
-        #     db.rollback()
-        #     return Response(str(e), 403)
-        if form.email.data == 'admin@nus.edu.sg' and form.password.data == 'group8mwjyvcl':
-            flash('Login successful!', 'success')
-            return redirect(url_for('home'))
-        else:
-            flash('Login Unsuccessful. Kindly check whether you have input the correct email and/or password', 'danger')
+        try:
+            retrieval_command = sqlalchemy.text(f"""SELECT * FROM users u WHERE u.email ='{form.data['email']}';""") 
+            res = db.execute(retrieval_command)
+            db.commit()
+            retrieved_password = res.fetchall()
+            if retrieved_password[0][2] == form.data['password']:
+                flash('Login successful!', 'success')
+                return redirect(url_for('home'))
+            else:
+                flash(f'Login Unsuccessful. Kindly check whether you have input the correct email and/or password', 'danger')
+        except Exception as e:
+            db.rollback()
+            return Response(str(e), 403)
     return render_template('login.html', title='Login', form=form)
-
-
 
 
 # ? A dictionary containing
