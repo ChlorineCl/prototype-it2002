@@ -30,6 +30,19 @@ app.config['SECRET_KEY'] = '375a627673770da29deabd8de4ec1711'
 # ? Just enabling the flask app to be able to communicate with any request source
 CORS(app)
 
+# ? building our `engine` object from a custom configuration string
+# ? for this project, we'll use the default postgres user, on a database called `postgres` deployed on the same machine
+
+YOUR_POSTGRES_PASSWORD = "postgres"
+connection_string = f"postgresql://postgres:{YOUR_POSTGRES_PASSWORD}@localhost/postgres"
+engine = sqlalchemy.create_engine(
+    "postgresql://postgres:postgres@localhost/postgres",
+    future=True
+)
+
+# ? `db` - the database (connection) object will be used for executing queries on the connected database named `postgres` in our deployed Postgres DBMS
+db = engine.connect()
+
 # The post
 post = [
     {
@@ -63,12 +76,15 @@ def home():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        form.data
-        insertion_command = f'INSERT INTO [users] VALUES ({form.data["email"]}, )'
-        db.execute()
-        db.commit()
-        flash(f'Account created for {form.username.data} successfully!', 'success')
-        return redirect(url_for('home'))
+        try:
+            insertion_command = sqlalchemy.text(f"INSERT INTO users (email, username, password, creation_date) VALUES ('{form.data['email']}', '{form.data['username']}', '{form.data['password']}', '{date.today()}');")
+            db.execute(insertion_command)
+            db.commit()
+            flash(f'Account created for {form.username.data} successfully!', 'success')
+            return redirect(url_for('home'))
+        except Exception as e:
+            db.rollback()
+            return Response(str(e), 403)
     return render_template('register.html', title='Registration', form=form)
 
 # Creating our login route
@@ -76,61 +92,20 @@ def register():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        if form.email.data == 'admin@nus.edu.sg' and form.password.data == 'group8mwjyvcl':
-            flash('Login successful!', 'success')
-            return redirect(url_for('home'))
-        else:
-            flash('Login Unsuccessful. Kindly check whether you have input the correct email and/or password', 'danger')
+        try:
+            retrieval_command = sqlalchemy.text(f"""SELECT * FROM users u WHERE u.email ='{form.data['email']}';""") 
+            res = db.execute(retrieval_command)
+            db.commit()
+            retrieved_password = res.fetchall()
+            if retrieved_password[0][2] == form.data['password']:
+                flash('Login successful!', 'success')
+                return redirect(url_for('home'))
+            else:
+                flash(f'Login Unsuccessful. Kindly check whether you have input the correct email and/or password', 'danger')
+        except Exception as e:
+            db.rollback()
+            return Response(str(e), 403)
     return render_template('login.html', title='Login', form=form)
-
-
-#? building our `engine` object from a custom configuration string
-#? for this project, we'll use the default postgres user, on a database called `postgres` deployed on the same machine
-
-YOUR_POSTGRES_PASSWORD = "postgres"
-connection_string = f"postgresql://postgres:{YOUR_POSTGRES_PASSWORD}@localhost/postgres"
-engine = sqlalchemy.create_engine(
-    "postgresql://postgres:postgres@localhost/postgres"
-)
-
-# ? `db` - the database (connection) object will be used for executing queries on the connected database named `postgres` in our deployed Postgres DBMS
-db = engine.connect()
-
-#database 
-# app.config['SQLALCHEMY_DATABASE_URI']='postgresql://postgres:postgres@it2002-08-i.comp.nus.edu.sg/postgres'
-# db=SQLAlchemy(app)
-
-# class Postgres(db.Model):
-#   __tablename__='users'
-#   email=db.Column(db.Integer,primary_key=True)
-#   username=db.Column(db.String(40))
-#   password=db.Column(db.String(40))
-#   creation_date=db.Column(db.String(40))
-
-#   def __init__(self,email,username,password,creation_date):
-#     self.email=email
-#     self.username=username
-#     self.password=password
-#     self.creation_date=creation_date
-
-@app.route('/')
-def index():
-  return render_template('index.html')
-  
-@app.route('/submit', methods=['POST'])
-def submit():
-  if request.method =='POST':
-    email= request.form['email']
-    username=request.form['username']
-    password=request.form['password']
-    creation_date=request.form['creation_date']
-
-    user=Postgres(email,username,password,creation_date)
-    db.session.add(user)
-    db.session.commit()
-
-  return render_template('success.html', data=fname)
-
 
 
 # ? A dictionary containing
@@ -350,7 +325,7 @@ def create_app():
 
 
 # ? The port where the debuggable DB management API is served
-PORT = 2222
+PORT = 2223
 # ? Running the flask app on the localhost/0.0.0.0, port 2222
 # ? Note that you may change the port, then update it in the view application too to make it work (don't if you don't have another application occupying it)
 if __name__ == "__main__":
@@ -360,8 +335,6 @@ if __name__ == "__main__":
     # ? If you are willing to use waitress-serve command, please add `/home/sadm/.local/bin` to your ~/.bashrc
     # from waitress import serve
     # serve(app, host="0.0.0.0", port=PORT)
-
-
 
 
 
