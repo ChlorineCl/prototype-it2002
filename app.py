@@ -43,32 +43,39 @@ engine = sqlalchemy.create_engine(
 # ? `db` - the database (connection) object will be used for executing queries on the connected database named `postgres` in our deployed Postgres DBMS
 db = engine.connect()
 
-# The post
-post = [
-    {
-        'post_id': '1',
-        'owner': 'chenleiothers@gmail.com',
-        'isbn10': '978699384-5',
-        'availability': 'true',
-        'date_posted': '2022-10-01',
-        'title': 'Harry Potter'
-    },
-    {
-        'post_id': '2',
-        'owner': 'jiayue@gmail.com',
-        'isbn10': '481222564-7',
-        'availability': 'true',
-        'date_posted': '2022-10-02',
-        'title': 'Silence of the Lambs'
-    }
-]
-
 # Creating our home page which is where the posts would show up
-
 
 @app.route("/")
 @app.route("/home")
 def home():
+    template = ('post_id', 'owner', 'isbn10', 'availability', 'date_posted')
+    allposts = []
+    try:
+        post_retrieval_command = sqlalchemy.text(f"""SELECT * FROM post;""")
+        post_res = db.execute(post_retrieval_command)  
+        db.commit()
+        allposts = post_res.fetchall()
+    except Exception as e:
+        db.rollback()
+
+    def convert_to_dict(tuple1, tuple2):
+        resultDictionary = {tuple1[i] : tuple2[i] for i, _ in enumerate(tuple2)}
+        return(resultDictionary)
+
+    post = []
+    for i in allposts:
+        i = i[0:4] + (i[4].strftime("%Y-%m-%d"),)
+        i = tuple(map(str, i))
+        result = convert_to_dict(template, i)
+        try:
+            title_retrieval_command = sqlalchemy.text(f"""SELECT b.title FROM book b WHERE b.isbn10 = '{result['isbn10']}';""")
+            retrieved_res = db.execute(title_retrieval_command)
+            db.commit()
+            thetitle = retrieved_res.fetchall()
+            result['title'] = thetitle[0][0]
+        except Exception as e:
+            db.rollback()    
+        post.append(result)
     return render_template('home.html', post=post, title='Home')
 
 # Creating our register route

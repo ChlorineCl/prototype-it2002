@@ -1,15 +1,15 @@
 {%extends "layout.html" %} 
 {% block content %}
     <h1>Home Page</h1>
-    {% for i in post%}
+    {% for i in post %}
         <article class="media content-section">
             <div class="media-body">
             <div class="article-metadata">
-                <a class="mr-2" href="#">{{ i.owner }}</a>
-                <small class="text-muted">{{ i.date_posted }}</small>
+                <a class="mr-2" href="#">{{ i['owner'] }}</a>
+                <small class="text-muted">{{ i['date_posted'] }}</small>
             </div>
-            <h2><a class="article-title" href="#">{{ i.title }}</a></h2>
-            <p class="article-content">{{ "Post ID: " + i.post_id + ", ISBN10: " + i.isbn10 + ", Availability: " + i.availability}}</p>
+            <h2><a class="article-title" href="#">{{ i['title'] }}</a></h2>
+            <p class="article-content">{{ "Post ID: " + i['post_id'] + ", ISBN10: " + i['isbn10'] + ", Availability: " + i['availability']}}</p>
             </div>
         </article>
     
