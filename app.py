@@ -96,8 +96,8 @@ def login():
             retrieval_command = sqlalchemy.text(f"""SELECT * FROM users u WHERE u.email ='{form.data['email']}';""") 
             res = db.execute(retrieval_command)
             db.commit()
-            retrieved_password = res.fetchall()
-            if retrieved_password[0][2] == form.data['password']:
+            retrieved_password = res.fetchone()
+            if retrieved_password[2] == form.data['password']:
                 flash('Login successful!', 'success')
                 return redirect(url_for('home'))
             else:
