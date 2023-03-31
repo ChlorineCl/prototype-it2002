@@ -19,12 +19,26 @@ from forms import RegistrationForm, LoginForm
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from flask_login import LoginManager, UserMixin, login_user, current_user
 
 # ? web-based applications written in flask are simply called apps are initialized in this format from the Flask base class. You may see the contents of `__name__` by hovering on it while debugging if you're curious
 app = Flask(__name__)
 
+# Initiate our login manager
+login_manager = LoginManager(app)
+
 # Setting our secret key
 app.config['SECRET_KEY'] = '375a627673770da29deabd8de4ec1711'
+
+#Creating our user class
+class User(UserMixin):
+    def __init__(self, id, username, password, creation_date):
+        self.id = id
+        self.username = username
+        self.password = password
+        self.creation_date = creation_date
+    
+
 
 
 # ? Just enabling the flask app to be able to communicate with any request source
@@ -81,6 +95,8 @@ def home():
 # Creating our register route
 @app.route("/register", methods=['GET', 'POST'])
 def register():
+    # if current_user.is_authenticated:
+    #     return redirect(url_for('home'))
     form = RegistrationForm()
     if form.validate_on_submit():
         try:
@@ -97,14 +113,20 @@ def register():
 # Creating our login route
 @app.route("/login", methods=['GET', 'POST'])
 def login():
+    # if current_user.is_authenticated:
+    #     return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
         try:
             retrieval_command = sqlalchemy.text(f"""SELECT * FROM users u WHERE u.email ='{form.data['email']}';""") 
             res = db.execute(retrieval_command)
             db.commit()
-            retrieved_password = res.fetchone()
-            if retrieved_password[2] == form.data['password']:
+            retrieved_result = res.fetchone()
+            retrieved_result = retrieved_result[0:3] + (retrieved_result[3].strftime("%Y-%m-%d"),)
+            retrieved_result = tuple(map(str, retrieved_result))
+            if retrieved_result[2] == form.data['password']:
+                user = User(retrieved_result[0], retrieved_result[1], retrieved_result[2], retrieved_result[3])
+                login_user(user, remember= form.data['remember'])
                 flash('Login successful!', 'success')
                 return redirect(url_for('home'))
             else:
@@ -113,6 +135,18 @@ def login():
             db.rollback()
             return Response(str(e), 403)
     return render_template('login.html', title='Login', form=form)
+
+@login_manager.user_loader
+def load_user(user_id):
+    retrieval_command = sqlalchemy.text(f"""SELECT * FROM users u WHERE u.email ='{user_id}';""") 
+    res = db.execute(retrieval_command)
+    db.commit()
+    retrieved_result = res.fetchone()
+    if(retrieved_result):
+        return(retrieved_result[0])
+    else:
+        return None
+
 
 
 # ? A dictionary containing
