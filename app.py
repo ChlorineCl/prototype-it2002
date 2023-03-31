@@ -95,8 +95,8 @@ def home():
 # Creating our register route
 @app.route("/register", methods=['GET', 'POST'])
 def register():
-    # if current_user.is_authenticated:
-    #     return redirect(url_for('home'))
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
     form = RegistrationForm()
     if form.validate_on_submit():
         try:
@@ -113,8 +113,8 @@ def register():
 # Creating our login route
 @app.route("/login", methods=['GET', 'POST'])
 def login():
-    # if current_user.is_authenticated:
-    #     return redirect(url_for('home'))
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
         try:
@@ -142,10 +142,9 @@ def load_user(user_id):
     res = db.execute(retrieval_command)
     db.commit()
     retrieved_result = res.fetchone()
-    if(retrieved_result):
-        return(retrieved_result[0])
-    else:
-        return None
+    retrieved_result = retrieved_result[0:3] + (retrieved_result[3].strftime("%Y-%m-%d"),)
+    retrieved_result = tuple(map(str, retrieved_result))
+    return User(retrieved_result[0], retrieved_result[1], retrieved_result[2], retrieved_result[3])
 
 
 
