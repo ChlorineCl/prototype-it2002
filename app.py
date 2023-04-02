@@ -6,26 +6,29 @@ import json
 # ? flask - library used to write REST API endpoints (functions in simple words) to communicate with the client (view) application's interactions
 # ? request - is the default object used in the flask endpoints to get data from the requests
 # ? Response - is the default HTTP Response object, defining the format of the returned data by this api
-from flask import Flask, render_template, request, Response, url_for, flash, redirect
+from flask import Flask, render_template, request, Response, url_for, flash, redirect, request
 # ? sqlalchemy is the main library we'll use here to interact with PostgresQL DBMS
 import sqlalchemy
 # ? Just a class to help while coding by suggesting methods etc. Can be totally removed if wanted, no change
 from typing import Dict
-# Importing datetime to work with date
+# Importing datetime to work with app = Flask(__name__)
+
 from datetime import date
 
 # Importing our register and login forms
-from forms import RegistrationForm, LoginForm
+from forms import RegistrationForm, LoginForm,PostForm
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from flask_login import LoginManager, UserMixin, login_user, current_user
+from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user, login_required
 
 # ? web-based applications written in flask are simply called apps are initialized in this format from the Flask base class. You may see the contents of `__name__` by hovering on it while debugging if you're curious
 app = Flask(__name__)
 
 # Initiate our login manager
 login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+login_manager.login_message_category = 'info'
 
 # Setting our secret key
 app.config['SECRET_KEY'] = '375a627673770da29deabd8de4ec1711'
@@ -127,8 +130,8 @@ def login():
             if retrieved_result[2] == form.data['password']:
                 user = User(retrieved_result[0], retrieved_result[1], retrieved_result[2], retrieved_result[3])
                 login_user(user, remember= form.data['remember'])
-                flash('Login successful!', 'success')
-                return redirect(url_for('home'))
+                next_page = request.args.get('next')
+                return redirect(next_page) if next_page else redirect(url_for('home'))
             else:
                 flash(f'Login Unsuccessful. Kindly check whether you have input the correct email and/or password', 'danger')
         except Exception as e:
@@ -145,6 +148,18 @@ def load_user(user_id):
     retrieved_result = retrieved_result[0:3] + (retrieved_result[3].strftime("%Y-%m-%d"),)
     retrieved_result = tuple(map(str, retrieved_result))
     return User(retrieved_result[0], retrieved_result[1], retrieved_result[2], retrieved_result[3])
+
+# Creating our logout route
+@app.route("/logout")
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+# Creating our account route
+@app.route("/account")
+@login_required
+def account():
+    return render_template('account.html', title='Account')
 
 
 
@@ -366,6 +381,7 @@ def create_app():
 
 # ? The port where the debuggable DB management API is served
 PORT = 2223
+
 # ? Running the flask app on the localhost/0.0.0.0, port 2222
 # ? Note that you may change the port, then update it in the view application too to make it work (don't if you don't have another application occupying it)
 if __name__ == "__main__":
@@ -377,5 +393,52 @@ if __name__ == "__main__":
     # serve(app, host="0.0.0.0", port=PORT)
 
 
+##create post
 
+@app.route("/create_post", methods=['GET', 'POST'])
 
+#@login_required # Adding login_required decorator to ensure only logged in users can access this route
+def create_post():
+    form = PostForm()
+    if form.validate_on_submit() and current_user.is_authenticated:
+        try:
+            # First, insert the new book (if it does not exist yet)
+            insertion_command = sqlalchemy.text(f"""INSERT INTO book (isbn10, title, author) 
+                                                    SELECT '{form.isbn10.data}', '{form.title.data}', '{form.author.data}' 
+                                                    WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn10='{form.isbn10.data}');""")
+            db.execute(insertion_command)
+            db.commit()
+            
+            # Get the user's ID from the current_user variable ---prolly need to convert to dictionary
+            user_id = current_user.get_id()
+            
+            # Then, insert the new post
+            insertion_command = sqlalchemy.text(f"""INSERT INTO post (owner, isbn10, availability, post_date) 
+                                                    VALUES ('{user_id}', '{form.isbn10.data}', '{form.availability.data}', '{date.today()}');""")
+            db.execute(insertion_command)
+            db.commit()
+            flash(f'Post created for {form.title.data} successfully!', 'success')
+            return redirect(url_for('home'))
+        except Exception as e:
+            db.rollback()
+            return Response(str(e), 403)
+    return render_template('create_post.html', title='Create Post', form=form)
+
+###update post 
+
+#@app.route("/post/<int:post_id>")
+#def post(post_id):
+    #post = Post.query.get_or_404(post_id)  ---prolly need to retrieve it from the dictionary
+    #return render_template('post.html', title=post.title, post=post)
+
+##Delete post
+def delete_post(post_id):
+    try:
+        # Delete the post with the specified post_id
+        deletion_command = sqlalchemy.text(f"""DELETE FROM post WHERE id='{post_id}'""")
+        db.execute(deletion_command)
+        db.commit()
+        flash(f'Post with ID {post_id} has been deleted successfully!', 'success')
+    except Exception as e:
+        db.rollback()
+        return Response(str(e), 403)

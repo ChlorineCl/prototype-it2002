@@ -17,8 +17,9 @@ class LoginForm(FlaskForm):
 
 ###Added the post
 class PostForm(FlaskForm):
-    title = StringField('Title', validators = [DataRequired()] )
-    content = TextAreaField('Content',  validators = [DataRequired()] )
-    submit = SubmitField('Post')
-    
+    title = StringField('Title', validators=[DataRequired()])
+    author = StringField('Author', validators=[DataRequired()])
+    isbn10 = StringField('ISBN-10', validators=[DataRequired()])
+    availability = BooleanField('Availability', default=True)
+    submit = SubmitField('Create Post')
 
