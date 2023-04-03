@@ -1,72 +1,31 @@
 {% extends "layout.html" %}
-
 {% block content %}
-  <h1>Create Post</h1>
-
-  <!-- The form for creating a new post -->
-  <form method="POST" action="{{ url_for('create_post') }}">
-    {{ form.hidden_tag() }} <!-- Renders a hidden input field for CSRF protection -->
-
-    <!-- ISBN-10 field -->
-    <div class="form-group">
-      {{ form.isbn10.label(class="form-control-label") }}
-      {{ form.isbn10(class="form-control form-control-lg") }}
-      {% if form.isbn10.errors %}
-        <div class="invalid-feedback">
-          {% for error in form.isbn10.errors %}
-            <span>{{ error }}</span>
-          {% endfor %}
-        </div>
-      {% endif %}
+    <div class="content-section">
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">New Post</legend>
+                <div class="form-group">
+                    {{ form.isbn10.label(class="form-control-label") }}
+                    {% if form.isbn10.errors %}
+                        {{ form.isbn10(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.isbn10.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.isbn10(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+                <div class="form-check">
+                    {{ form.availability(class="form-check-input") }}
+                    {{ form.availability.label(class="form-check-label") }}
+                </div>
+            </fieldset>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-outline-info") }}
+            </div>
+        </form>
     </div>
-
-    <!-- Title field -->
-    <div class="form-group">
-      {{ form.title.label(class="form-control-label") }}
-      {{ form.title(class="form-control form-control-lg") }}
-      {% if form.title.errors %}
-        <div class="invalid-feedback">
-          {% for error in form.title.errors %}
-            <span>{{ error }}</span>
-          {% endfor %}
-        </div>
-      {% endif %}
-    </div>
-
-    <!-- Author field -->
-    <div class="form-group">
-      {{ form.author.label(class="form-control-label") }}
-      {{ form.author(class="form-control form-control-lg") }}
-      {% if form.author.errors %}
-        <div class="invalid-feedback">
-          {% for error in form.author.errors %}
-            <span>{{ error }}</span>
-          {% endfor %}
-        </div>
-      {% endif %}
-    </div>
-
-    <!-- Availability field -->
-    <div class="form-group">
-      {{ form.availability.label(class="form-control-label") }}
-      {{ form.availability(class="form-control form-control-lg") }}
-      {% if form.availability.errors %}
-        <div class="invalid-feedback">
-          {% for error in form.availability.errors %}
-            <span>{{ error }}</span>
-          {% endfor %}
-        </div>
-      {% endif %}
-    </div>
-
-    <!-- Submit button -->
-    <button type="submit" class="btn btn-primary">Create Post</button>
-  </form>
-
-  <!-- If a post_id is passed to the template, display a "Delete Post" button -->
-  {% if post_id %}
-    <form method="POST" action="{{ url_for('delete_post', post_id=post_id) }}">
-      <button type="submit" class="btn btn-danger">Delete Post</button>
-    </form>
-  {% endif %}
-{% endblock %}
+{% endblock content %}
