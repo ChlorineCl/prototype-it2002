@@ -1,5 +1,5 @@
 body {
-    background: #fafafa;
+    background: #f7f2ed;
     color: #333333;
     margin-top: 5rem;
   }
@@ -9,25 +9,31 @@ body {
   }
   
   .bg-steel {
-    background-color: #5f788a;
+    background-color: #573f32; 
+    box-shadow: 0px 0px 8px rgba(0,0,0,.6);
+  }
+
+  .site-header {
+    font-family: Rockwell, Arial;
   }
   
   .site-header .navbar-nav .nav-link {
-    color: #cbd5db;
+    color: rgba(255, 255, 255, 0.6);
   }
   
   .site-header .navbar-nav .nav-link:hover {
     color: #ffffff;
   }
   
-  .site-header .navbar-nav .nav-link.active {
+  .site-header .navbar-nav .nav-link:active {
     font-weight: 500;
   }
+
   
   .content-section {
     background: #ffffff;
     padding: 10px 20px;
-    border: 1px solid #dddddd;
+    border: 1px solid #bdb5ac;
     border-radius: 3px;
     margin-bottom: 20px;
   }
@@ -37,7 +43,7 @@ body {
   }
   
   a.article-title:hover {
-    color: #428bca;
+    color: #9c8059;
     text-decoration: none;
   }
   
