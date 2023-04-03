@@ -393,52 +393,98 @@ if __name__ == "__main__":
     # serve(app, host="0.0.0.0", port=PORT)
 
 
-##create post
 
-@app.route("/create_post", methods=['GET', 'POST'])
+# ##create post
+# @app.route("/create_post", methods=['GET', 'POST'])
 
-#@login_required # Adding login_required decorator to ensure only logged in users can access this route
-def create_post():
-    form = PostForm()
-    if form.validate_on_submit() and current_user.is_authenticated:
-        try:
-            # First, insert the new book (if it does not exist yet)
-            insertion_command = sqlalchemy.text(f"""INSERT INTO book (isbn10, title, author) 
-                                                    SELECT '{form.isbn10.data}', '{form.title.data}', '{form.author.data}' 
-                                                    WHERE NOT EXISTS (SELECT 1 FROM book WHERE isbn10='{form.isbn10.data}');""")
-            db.execute(insertion_command)
-            db.commit()
+# @login_required # Adding login_required decorator to ensure only logged in users can access this route
+# def create_post():
+#     form = PostForm() # initialize PostForm
+#     user_id = current_user.id # get the current user's id
+#     if form.validate_on_submit(): # if the form has been submitted and validated
+#         try:
+#             # insert the new post to the post table
+#             insertion_command = sqlalchemy.text(f"""INSERT INTO post (owner, isbn10, availability, post_date) 
+#                                                     VALUES ('{user_id}', '{form.isbn10.data}', '{form.availability.data}', '{date.today()}');""")
+#             db.execute(insertion_command) # execute the SQL command
+#             db.commit() # commit the transaction
+#             flash(f'Post created for {form.title.data} successfully!', 'success') # flash a success message
+#             return redirect(url_for('home')) # redirect to the home page
+#         except Exception as e:
+#             db.rollback() # rollback the transaction if an exception occurred
+#             return Response(str(e), 403) # return a 403 Forbidden response if an exception occurred
+#     return render_template('create_post.html', title='Create Post', form=form) # render the create_post.html template with the PostForm object
+
+# @app.route("/post/<int:post_id>")
+# @login_required # Adding login_required decorator to ensure only logged in users can access this route
+# def post(post_id):
+#     form = PostForm() # initialize PostForm
+#     user_id = current_user.id     #get the current user's id 
+#     result = db.execute(f"""SELECT id FROM post WHERE owner='{user_id}' AND isbn10='{form.isbn10.data}' AND availability='{form.availability.data}' AND post_date='{date.today()}' ORDER BY id DESC LIMIT 1;""")
+#     post = result.fetchone()[0] # get the post with the specified id
+#     return render_template('create_post.html', title=post.title, post=post) # render the create_post.html template with the post object
+
+# # Update post route
+# @app.route("/create_post/<int:post_id>/update", methods=['POST'])
+# @login_required
+# def update_post(post_id):
+#     # Get the current user ID
+#     user_id = current_user.id
+    
+#     # Get the post ID from the database based on the current user, ISBN10, availability, and post date
+#     result = db.execute(f"""SELECT id FROM post WHERE owner='{user_id}' AND isbn10='{form.isbn10.data}' AND availability='{form.availability.data}' AND post_date='{date.today()}' ORDER BY id DESC LIMIT 1;""")
+#     post = result.fetchone()[0]
+    
+#     # Create a PostForm instance
+#     form = PostForm()
+
+#     if form.validate_on_submit() and current_user.is_authenticated and post.owner == current_user.id:
+#         try:
+#             # Update the post attributes with the new values
+#             post.isbn10 = form.isbn10.data
+#             post.availability = form.availability.data
+#             post.last_updated = datetime.now()
             
-            # Get the user's ID from the current_user variable ---prolly need to convert to dictionary
-            user_id = current_user.get_id()
+#             # Commit the changes to the database
+#             db.session.commit()
             
-            # Then, insert the new post
-            insertion_command = sqlalchemy.text(f"""INSERT INTO post (owner, isbn10, availability, post_date) 
-                                                    VALUES ('{user_id}', '{form.isbn10.data}', '{form.availability.data}', '{date.today()}');""")
-            db.execute(insertion_command)
-            db.commit()
-            flash(f'Post created for {form.title.data} successfully!', 'success')
-            return redirect(url_for('home'))
-        except Exception as e:
-            db.rollback()
-            return Response(str(e), 403)
-    return render_template('create_post.html', title='Create Post', form=form)
+#             # Show a success message and redirect to the home page
+#             flash(f'Post updated for {form.title.data} successfully!', 'success')
+#             return redirect(url_for('home'))
+        
+#         except Exception as e:
+#             # If there was an error, rollback the transaction and return a 403 error
+#             db.session.rollback()
+#             return Response(str(e), 403)
 
-###update post 
+#     # If the current user is not the owner of the post, show an error message and redirect to the home page
+#     elif post.owner != current_user.id:
+#         flash('You are not authorized to update this post', 'danger')
+#         return redirect(url_for('home'))
+    
+#     # If the request method is GET, set the form values to the current post attributes
+#     elif request.method == 'GET':
+#         form.isbn10.data = post.isbn10
+#         form.availability.data = post.availability
+    
+#     # Render the create_post.html template with the title "Update Post" and the PostForm instance
+#     return render_template('create_post.html', title='Update Post', form=form)
 
-#@app.route("/post/<int:post_id>")
-#def post(post_id):
-    #post = Post.query.get_or_404(post_id)  ---prolly need to retrieve it from the dictionary
-    #return render_template('post.html', title=post.title, post=post)
+#  # Delete post route
+# @app.route("/create_post/<int:post_id>/delete_post", methods=['POST'])
+# @login_required 
+# def delete_post(post_id):
+#     try:
+#         # Delete the post with the specified post_id from the database
+#         deletion_command = sqlalchemy.text(f"""DELETE FROM post WHERE id='{post_id}'""")
+#         db.execute(deletion_command)
+#         db.commit()
+        
+#         # Show a success message and redirect to the home page
+#         flash(f'Post with ID {post_id} has been deleted successfully!', 'success')
+    
+#     except Exception as e:
+#         # If there was an error, rollback the transaction and return a 403 error
+#         db.rollback()
+#         return Response(str(e), 403)
 
-##Delete post
-def delete_post(post_id):
-    try:
-        # Delete the post with the specified post_id
-        deletion_command = sqlalchemy.text(f"""DELETE FROM post WHERE id='{post_id}'""")
-        db.execute(deletion_command)
-        db.commit()
-        flash(f'Post with ID {post_id} has been deleted successfully!', 'success')
-    except Exception as e:
-        db.rollback()
-        return Response(str(e), 403)

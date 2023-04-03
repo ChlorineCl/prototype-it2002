@@ -1,8 +1,13 @@
 {% extends "layout.html" %}
+
 {% block content %}
   <h1>Create Post</h1>
+
+  <!-- The form for creating a new post -->
   <form method="POST" action="{{ url_for('create_post') }}">
-    {{ form.hidden_tag() }}
+    {{ form.hidden_tag() }} <!-- Renders a hidden input field for CSRF protection -->
+
+    <!-- ISBN-10 field -->
     <div class="form-group">
       {{ form.isbn10.label(class="form-control-label") }}
       {{ form.isbn10(class="form-control form-control-lg") }}
@@ -14,6 +19,8 @@
         </div>
       {% endif %}
     </div>
+
+    <!-- Title field -->
     <div class="form-group">
       {{ form.title.label(class="form-control-label") }}
       {{ form.title(class="form-control form-control-lg") }}
@@ -25,6 +32,8 @@
         </div>
       {% endif %}
     </div>
+
+    <!-- Author field -->
     <div class="form-group">
       {{ form.author.label(class="form-control-label") }}
       {{ form.author(class="form-control form-control-lg") }}
@@ -36,6 +45,8 @@
         </div>
       {% endif %}
     </div>
+
+    <!-- Availability field -->
     <div class="form-group">
       {{ form.availability.label(class="form-control-label") }}
       {{ form.availability(class="form-control form-control-lg") }}
@@ -47,11 +58,14 @@
         </div>
       {% endif %}
     </div>
+
+    <!-- Submit button -->
     <button type="submit" class="btn btn-primary">Create Post</button>
   </form>
+
+  <!-- If a post_id is passed to the template, display a "Delete Post" button -->
   {% if post_id %}
     <form method="POST" action="{{ url_for('delete_post', post_id=post_id) }}">
-      {{ csrf_token() }}
       <button type="submit" class="btn btn-danger">Delete Post</button>
     </form>
   {% endif %}
