@@ -1,5 +1,11 @@
 wHgaGe34Bgq0
 
+    <!-- <form method="POST" action="/">
+        {{ form.csrf_token }}
+        {{ form.choices }}
+        <button>Filter</button>
+    </form> -->
+
 <div class="col-md-4">
   <div class="content-section">
   <h3>Our Sidebar</h3>
