@@ -1,4 +1,4 @@
-{%extends "layout.html" %} 
+{%extends "layout.html" %}
 {% block content %}
     <h1>Home Page</h1>
     {% for i in post %}
@@ -12,5 +12,6 @@
             <p class="article-content">{{ "Post ID: " + i['post_id'] + ", ISBN10: " + i['isbn10'] + ", Availability: " + i['availability']}}</p>
             </div>
         </article>
-    {% endfor %} 
+    {% endfor %}
 {% endblock content%}
+ 

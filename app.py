@@ -160,27 +160,7 @@ def logout():
 @login_required
 def account():
     return render_template('account.html', title='Account')
-
-# Creating layout route for sidebar
-# @app.route("/layout")
-# def layout():
-#     if not current_user.is_authenticated:
-#         return redirect(url_for('login'))
-#     curr_user_id = current_user.get_id()
-#     stats = []
-#     try:
-#         num_borrowed_retrieval_command = sqlalchemy.text(f"""SELECT COUNT(u.borrower_email) FROM transactions 
-#                                                                 WHERE u.type = 'borrow' 
-#                                                                 AND u.borrower_email = '{curr_user_id}';""")
-#         retrieved_res = db.execute(num_borrowed_retrieval_command)  
-#         db.commit()
-#         num_borrowed = retrieved_res.fetchall()
-#         stats.append(num_borrowed[0][0])
-#     except Exception as e:
-#         db.rollback()
-#     return render_template('layout.html', stats=stats)
     
-
 #create post
 @app.route("/post/new", methods=['GET', 'POST'])
 @login_required 
@@ -310,11 +290,12 @@ def post(post_id):
 #         db.rollback()
 #         return Response(str(e), 403)
 
-        
-
-        
-
-
+# @app.route("/stats")
+# def stats():
+#     1. create a stats.html 
+#     2. do your sql stuff, store them in variables 
+#     3. go to ur stats.html and extract them and display them in the way you want
+# render_template('stats.html', title= 'Stats', stats=stats)
 
 # ? A dictionary containing
 data_types = {

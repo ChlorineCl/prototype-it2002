@@ -1,3 +1,21 @@
+wHgaGe34Bgq0
+
+<div class="col-md-4">
+  <div class="content-section">
+  <h3>Our Sidebar</h3>
+  <p class='text-muted'>You can put any information here you'd like.
+      <li class="list-group">
+      {% if current_user.is_authenticated %}
+          <li class="list-group-item list-group-item-light">Books you've borrowed: stats[0]</li>
+      {% endif %}
+      <li class="list-group-item list-group-item-light">Most Popular Book: </li>
+      <li class="list-group-item list-group-item-light">Most Popular Genre: </li>
+      <li class="list-group-item list-group-item-light">etc</li>
+      </ul>
+  </p>
+  </div>
+</div>  
+
 # database 
 # app.config['SQLALCHEMY_DATABASE_URI']='postgresql://postgres:postgres@it2002-08-i.comp.nus.edu.sg/postgres'
 # db=SQLAlchemy(app)
