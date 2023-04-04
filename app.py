@@ -6,7 +6,7 @@ import json
 # ? flask - library used to write REST API endpoints (functions in simple words) to communicate with the client (view) application's interactions
 # ? request - is the default object used in the flask endpoints to get data from the requests
 # ? Response - is the default HTTP Response object, defining the format of the returned data by this api
-from flask import Flask, render_template, request, Response, url_for, flash, redirect, request
+from flask import Flask, render_template, request, Response, url_for, flash, redirect, request, abort
 # ? sqlalchemy is the main library we'll use here to interact with PostgresQL DBMS
 import sqlalchemy
 # ? Just a class to help while coding by suggesting methods etc. Can be totally removed if wanted, no change
@@ -16,11 +16,14 @@ from typing import Dict
 from datetime import date
 
 # Importing our register and login forms
-from forms import RegistrationForm, LoginForm, PostForm
+from forms import RegistrationForm, LoginForm, PostForm, UpdateForm
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user, login_required
+# from flask_wtf import FlaskForm
+# from wtforms_alchemy import QuerySelectMultipleField
+# from wtforms import widgets
 
 # ? web-based applications written in flask are simply called apps are initialized in this format from the Flask base class. You may see the contents of `__name__` by hovering on it while debugging if you're curious
 app = Flask(__name__)
@@ -41,9 +44,6 @@ class User(UserMixin):
         self.password = password
         self.creation_date = creation_date
     
-
-
-
 # ? Just enabling the flask app to be able to communicate with any request source
 CORS(app)
 
@@ -98,6 +98,7 @@ def home():
 #Creating Books route
 @app.route("/books")
 def books():
+    # form = MyForm()
     template = ('isbn10', 'title', 'authors', 'publisher', 'genre')
     allbooks = []
     try:
@@ -249,69 +250,36 @@ def post(post_id):
             db.rollback() 
             return Response(str(e), 403)
 
-# # Update post route
-# @app.route("/create_post/<int:post_id>/update", methods=['POST'])
-# @login_required
-# def update_post(post_id):
-#     # Get the current user ID
-#     user_id = current_user.id
-    
-#     # Get the post ID from the database based on the current user, ISBN10, availability, and post date
-#     result = db.execute(f"""SELECT id FROM post WHERE owner='{user_id}' AND isbn10='{form.isbn10.data}' AND availability='{form.availability.data}' AND post_date='{date.today()}' ORDER BY id DESC LIMIT 1;""")
-#     post = result.fetchone()[0]
-    
-#     # Create a PostForm instance
-#     form = PostForm()
-
-#     if form.validate_on_submit() and current_user.is_authenticated and post.owner == current_user.id:
-#         try:
-#             # Update the post attributes with the new values
-#             post.isbn10 = form.isbn10.data
-#             post.availability = form.availability.data
-#             post.last_updated = datetime.now()
-            
-#             # Commit the changes to the database
-#             db.session.commit()
-            
-#             # Show a success message and redirect to the home page
-#             flash(f'Post updated for {form.title.data} successfully!', 'success')
-#             return redirect(url_for('home'))
-        
-#         except Exception as e:
-#             # If there was an error, rollback the transaction and return a 403 error
-#             db.session.rollback()
-#             return Response(str(e), 403)
-
-#     # If the current user is not the owner of the post, show an error message and redirect to the home page
-#     elif post.owner != current_user.id:
-#         flash('You are not authorized to update this post', 'danger')
-#         return redirect(url_for('home'))
-    
-#     # If the request method is GET, set the form values to the current post attributes
-#     elif request.method == 'GET':
-#         form.isbn10.data = post.isbn10
-#         form.availability.data = post.availability
-    
-#     # Render the create_post.html template with the title "Update Post" and the PostForm instance
-#     return render_template('create_post.html', title='Update Post', form=form)
-
-#  # Delete post route
-# @app.route("/create_post/<int:post_id>/delete_post", methods=['POST'])
-# @login_required 
-# def delete_post(post_id):
-#     try:
-#         # Delete the post with the specified post_id from the database
-#         deletion_command = sqlalchemy.text(f"""DELETE FROM post WHERE id='{post_id}'""")
-#         db.execute(deletion_command)
-#         db.commit()
-        
-#         # Show a success message and redirect to the home page
-#         flash(f'Post with ID {post_id} has been deleted successfully!', 'success')
-    
-#     except Exception as e:
-#         # If there was an error, rollback the transaction and return a 403 error
-#         db.rollback()
-#         return Response(str(e), 403)
+# Update post route
+@app.route("/post/<int:post_id>/update", methods=['GET', 'POST'])
+@login_required
+def update_post(post_id):
+    try:
+        retrieve_post = sqlalchemy.text(f"""SELECT * FROM post WHERE post_id='{post_id}';""")
+        res = db.execute(retrieve_post)
+        db.commit()
+        retrieved_post = res.fetchone()
+        if retrieved_post[1] != current_user.id:
+            abort(403)
+        if retrieved_post:
+            form = UpdateForm()
+            form.isbn10.data = retrieved_post[2]
+            if form.validate_on_submit():
+                try:
+                    update_command = sqlalchemy.text(f"""UPDATE post SET availability = '{form.data['availability']}' WHERE post_id='{post_id}';""")
+                    db.execute(update_command)
+                    db.commit()
+                    flash(f'Post availability updated successfully', 'success')
+                    return redirect(url_for('post', post_id = post_id))
+                except Exception as e:
+                    db.rollback() 
+                    return Response(str(e), 403)
+            return render_template('update_post.html', title='Update Post', form=form)
+        else:
+            return Response('Post not found', 404)
+    except Exception as e:
+            db.rollback() 
+            return Response(str(e), 403)
 
 # @app.route("/stats")
 # def stats():

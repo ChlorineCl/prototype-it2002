@@ -15,9 +15,12 @@ class LoginForm(FlaskForm):
     remember = BooleanField('Remember Me')
     submit = SubmitField('Login')
 
-###Added the post
 class PostForm(FlaskForm):
     isbn10 = StringField('ISBN-10', validators=[DataRequired()])
     availability = BooleanField('Availability', default=True)
     submit = SubmitField('Create Post')
 
+class UpdateForm(FlaskForm):
+    isbn10 = StringField('ISBN-10', validators=[DataRequired()])
+    availability = BooleanField('Availability')
+    submit = SubmitField('Update post availability')

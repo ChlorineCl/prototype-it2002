@@ -1,6 +1,11 @@
 {%extends "layout.html" %}
 {% block content %}
     <h1>Book List</h1>
+    <!-- <form method="POST" action="/">
+        {{ form.csrf_token }}
+        {{ form.choices }}
+        <button>Filter</button>
+    </form> -->
     {% for i in books %}
         <article class="media content-section">
             <div class="media-body">
