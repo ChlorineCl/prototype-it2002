@@ -95,6 +95,39 @@ def home():
         post.append(result)
     return render_template('home.html', post=post, title='Home')
 
+#Creating Books route
+@app.route("/books")
+def books():
+    template = ('post_id', 'owner', 'isbn10', 'availability', 'date_posted')
+    allposts = []
+    try:
+        post_retrieval_command = sqlalchemy.text(f"""SELECT * FROM post ORDER BY post_date DESC ;""")
+        post_res = db.execute(post_retrieval_command)  
+        db.commit()
+        allposts = post_res.fetchall()
+    except Exception as e:
+        db.rollback()
+
+    def convert_to_dict(tuple1, tuple2):
+        resultDictionary = {tuple1[i] : tuple2[i] for i, _ in enumerate(tuple2)}
+        return(resultDictionary)
+
+    post = []
+    for i in allposts:
+        i = i[0:4] + (i[4].strftime("%Y-%m-%d"),)
+        i = tuple(map(str, i))
+        result = convert_to_dict(template, i)
+        try:
+            title_retrieval_command = sqlalchemy.text(f"""SELECT b.title FROM book b WHERE b.isbn10 = '{result['isbn10']}';""")
+            retrieved_res = db.execute(title_retrieval_command)
+            db.commit()
+            thetitle = retrieved_res.fetchall()
+            result['title'] = thetitle[0][0]
+        except Exception as e:
+            db.rollback()    
+        post.append(result)
+    return render_template('books.html', post=post, title='Books')
+
 # Creating our register route
 @app.route("/register", methods=['GET', 'POST'])
 def register():
