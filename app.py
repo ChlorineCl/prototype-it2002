@@ -98,13 +98,13 @@ def home():
 #Creating Books route
 @app.route("/books")
 def books():
-    template = ('post_id', 'owner', 'isbn10', 'availability', 'date_posted')
-    allposts = []
+    template = ('isbn10', 'title', 'authors', 'publisher', 'genre')
+    allbooks = []
     try:
-        post_retrieval_command = sqlalchemy.text(f"""SELECT * FROM post ORDER BY post_date DESC ;""")
-        post_res = db.execute(post_retrieval_command)  
+        book_retrieval_command = sqlalchemy.text(f"""SELECT * FROM book ORDER BY title ASC ;""")
+        book_res = db.execute(book_retrieval_command)  
         db.commit()
-        allposts = post_res.fetchall()
+        allbooks = book_res.fetchall()
     except Exception as e:
         db.rollback()
 
@@ -112,21 +112,11 @@ def books():
         resultDictionary = {tuple1[i] : tuple2[i] for i, _ in enumerate(tuple2)}
         return(resultDictionary)
 
-    post = []
-    for i in allposts:
-        i = i[0:4] + (i[4].strftime("%Y-%m-%d"),)
-        i = tuple(map(str, i))
-        result = convert_to_dict(template, i)
-        try:
-            title_retrieval_command = sqlalchemy.text(f"""SELECT b.title FROM book b WHERE b.isbn10 = '{result['isbn10']}';""")
-            retrieved_res = db.execute(title_retrieval_command)
-            db.commit()
-            thetitle = retrieved_res.fetchall()
-            result['title'] = thetitle[0][0]
-        except Exception as e:
-            db.rollback()    
-        post.append(result)
-    return render_template('books.html', post=post, title='Books')
+    books = []
+    for i in allbooks:
+        result = convert_to_dict(template, i) 
+        books.append(result)
+    return render_template('books.html', books=books, title='Books')
 
 # Creating our register route
 @app.route("/register", methods=['GET', 'POST'])
