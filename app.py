@@ -108,7 +108,7 @@ def books():
             genre = filters[0]
             str = "SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
             for genre in filters[1:]:
-                newstr = "INTERSECT SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
+                newstr = "UNION SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
                 str += newstr
             str = str + ";"
             print(str)
