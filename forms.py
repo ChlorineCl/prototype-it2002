@@ -39,3 +39,14 @@ class ReturnForm(FlaskForm):
     owner = StringField('Owner', validators=[DataRequired()])
     submit = SubmitField('Return')
     
+FILTER_DATE = [
+    ('Most Recent', 'Most Recent'),
+    ('Oldest', 'Oldest')
+]
+
+FILTER_ALPHABET = [
+    ('A -> Z', 'A -> Z'),
+    ('Z -> A', 'Z -> A')
+]
+
+FILTER_GENRE = []
