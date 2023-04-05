@@ -96,8 +96,10 @@ def home():
     return render_template('home.html', post=post, title='Home')
 
 #Creating Books route
-@app.route("/books")
+@app.route("/books", methods=['GET', 'POST'])
 def books():
+    if request.method == 'POST':
+        filters = request.form.getlist('genre_checkbox')
     #form = MyForm()
     template = ('isbn10', 'title', 'authors', 'publisher', 'genre')
     allbooks = []

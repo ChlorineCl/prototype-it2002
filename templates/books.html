@@ -1,6 +1,11 @@
 {%extends "layout.html" %}
 {% block content %}
     <h1>Book List</h1>
+    <form method="POST">
+        Action<input type="checkbox" value="Action" name="genre_checkbox">
+        Comedy<input type="checkbox" value="Comedy" name="genre_checkbox">
+        <input type="submit">
+    </form>
     {% for i in books %}
         <article class="media content-section">
             <div class="media-body">
