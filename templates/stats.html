@@ -5,25 +5,21 @@
         <div class="media-body">
         <h2><a class="article-title" href="#">{{ "Top 5 Most Popular Books" }}</a></h2>
         <div class="article-metadata">
-            <a class="mr-2" href="#">{{ "of all time, in descending order" }}</a>
+            <a class="mr-2" href="#">{{ "All time, desc." }}</a>
         </div>
-        <p class="article-content">{% for i in stats['most_pop_books'] %} 
-            {{ i }} 
-        {% endfor %}
-        </p>
-        </div>
+        <p class="article-content">{% for i in stats['most_pop_books'] %} {{ i }} 
+        {% endfor %} </p> 
+    </div>
     </article>
 
     <article class="media content-section">
         <div class="media-body">
         <h2><a class="article-title" href="#">{{ "Top 5 Most Popular Authors" }}</a></h2>
         <div class="article-metadata">
-            <a class="mr-2" href="#">{{ "of all time, in descending order" }}</a>
+            <a class="mr-2" href="#">{{ "All time, desc." }}</a>
         </div>
-        <p class="article-content">{% for i in stats['most_pop_authors'] %} 
-            {{ i }} 
-        {% endfor %}
-        </p>
+        <p class="article-content">{% for i in stats['most_pop_authors'] %} {{ i }} 
+        {% endfor %} </p>
         </div>
     </article>
 
@@ -31,12 +27,10 @@
         <div class="media-body">
         <h2><a class="article-title" href="#">{{ "Top 5 Most Popular Genres" }}</a></h2>
         <div class="article-metadata">
-            <a class="mr-2" href="#">{{ "of all time, in descending order" }}</a>
+            <a class="mr-2" href="#">{{ "All time, desc." }}</a>
         </div>
-        <p class="article-content">{% for i in stats['most_pop_genres'] %} 
-            {{ i }} 
-        {% endfor %}
-        </p>
+        <p class="article-content">{% for i in stats['most_pop_genres'] %} {{ i }} 
+        {% endfor %} </p>
         </div>
     </article>
 
@@ -44,12 +38,10 @@
         <div class="media-body">
         <h2><a class="article-title" href="#">{{ "Top 5 Most Avid Borrowers" }}</a></h2>
         <div class="article-metadata">
-            <a class="mr-2" href="#">{{ "of all time, in descending order" }}</a>
+            <a class="mr-2" href="#">{{ "All time, desc." }}</a>
         </div>
-        <p class="article-content">{% for i in stats['top_borrowers'] %} 
-            {{ i }} 
-        {% endfor %}
-        </p>
+        <p class="article-content">{% for i in stats['top_borrowers'] %} {{ i }} 
+        {% endfor %} </p>
         </div>
     </article>
 
@@ -57,12 +49,10 @@
         <div class="media-body">
         <h2><a class="article-title" href="#">{{ "Top 5 Most Avid Lenders" }}</a></h2>
         <div class="article-metadata">
-            <a class="mr-2" href="#">{{ "of all time, in descending order" }}</a>
+            <a class="mr-2" href="#">{{ "All time, desc." }}</a>
         </div>
-        <p class="article-content">{% for i in stats['top_lenders'] %} 
-            {{ i }} 
-        {% endfor %}
-        </p>
+        <p class="article-content">{% for i in stats['top_lenders'] %} {{ i }} 
+        {% endfor %} </p>
         </div>
     </article>
 {% endblock content%}
