@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField
 from wtforms.validators import DataRequired, Length, Email, EqualTo
 
 class RegistrationForm(FlaskForm):
@@ -24,3 +24,10 @@ class UpdateForm(FlaskForm):
     isbn10 = StringField('ISBN-10', validators=[DataRequired()])
     availability = BooleanField('Availability')
     submit = SubmitField('Update post availability')
+
+class BorrowForm(FlaskForm):
+    post_id = IntegerField('Post ID', validators=[DataRequired()])
+    title = StringField('Title', validators=[DataRequired()])
+    isbn10 = StringField('ISBN-10', validators=[DataRequired()])
+    owner = StringField('Owner', validators=[DataRequired()])
+    submit = SubmitField('Borrow')

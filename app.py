@@ -16,7 +16,7 @@ from typing import Dict
 from datetime import date
 
 # Importing our register and login forms
-from forms import RegistrationForm, LoginForm, PostForm, UpdateForm
+from forms import RegistrationForm, LoginForm, PostForm, UpdateForm, BorrowForm
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -313,6 +313,61 @@ def borrow():
             db.rollback()    
         post.append(result)
     return render_template('borrow_post.html', post=post, title='Books available to borrow')
+
+@app.route("/post/<int:post_id>/borrow_book", methods=['GET', 'POST'])
+@login_required
+def borrow_book(post_id):
+    try:
+        retrieve_post = sqlalchemy.text(f"""SELECT * FROM post WHERE post_id='{post_id}';""")
+        res = db.execute(retrieve_post)
+        db.commit()
+        retrieved_post = res.fetchone()
+        if retrieved_post:
+            if retrieved_post[3] != True:
+                flash('This book is not available to be borrowed', 'danger')
+                return redirect(url_for('post', post_id = post_id))
+            
+            retrieve_title = sqlalchemy.text(f"""SELECT b.title FROM book b WHERE b.isbn10='{retrieved_post[2]}';""")
+            res2 = db.execute(retrieve_title)
+            db.commit()
+            retrieved_title = res2.fetchone()
+
+            form = BorrowForm()
+            form.post_id.data = retrieved_post[0]
+            form.title.data = retrieved_title[0]
+            form.isbn10.data = retrieved_post[2]
+            form.owner.data = retrieved_post[1]
+            if form.validate_on_submit():
+                if current_user.id == retrieved_post[1]:
+                    flash('You cannot borrow books owned by you', 'danger')
+                    return redirect(url_for('post', post_id = post_id))
+                try:
+                    borrower = current_user.id
+                    retrieve_transaction_id = sqlalchemy.text(f"""SELECT MAX(transaction_id) FROM transactions;""")
+                    res3 = db.execute(retrieve_transaction_id)
+                    db.commit()
+                    retrieved_transaction_id = res3.fetchone()
+
+                    insert_command = sqlalchemy.text(f"""INSERT INTO transactions (transaction_id, post_id, borrower_email, lender_email, transaction_date, type) VALUES
+                    ('{retrieved_transaction_id[0] + 1}', '{post_id}', '{borrower}', '{retrieved_post[1]}', '{date.today()}', 'borrow');""")
+                    db.execute(insert_command)
+                    db.commit()
+
+                    update_post_command = sqlalchemy.text(f"""UPDATE post SET availability=False WHERE post_id={post_id};""")
+                    db.execute(update_post_command)
+                    db.commit()
+                    
+                    flash(f'Book borrowed successfully. Enjoy it!', 'success')
+                    return redirect(url_for('home'))
+                except Exception as e:
+                    db.rollback() 
+                    return Response(str(e), 403)
+            return render_template('borrow_book.html', title='Book Borrowing', form=form)
+        else:
+            return Response('Post not found', 404)
+    except Exception as e:
+                    db.rollback() 
+                    return Response(str(e), 403)
 
 
 @app.route("/stats")
