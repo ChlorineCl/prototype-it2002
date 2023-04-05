@@ -100,26 +100,36 @@ def home():
 def books():
     template = ('isbn10', 'title', 'authors', 'publisher', 'genre')
     allbooks = []
-    if request.method == 'POST':
+
+    if request.method == 'POST': #if there is a filter submission
         filters = request.form.getlist('genre_checkbox')
+        #appending all the genres to a string of query
         if len(filters)!= 0:
             genre = filters[0]
             str = "SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
             for genre in filters[1:]:
-                newstr = "UNION SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
+                newstr = "INTERSECT SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
                 str += newstr
             str = str + ";"
             print(str)
+        #doing the retrieval
+        try:
+            book_retrieval_command = sqlalchemy.text(str)
+            book_res = db.execute(book_retrieval_command)  
+            db.commit()
+            allbooks = book_res.fetchall()
+        except Exception as e:
+            db.rollback()
 
-    #form = MyForm()
-
-    try:
-        book_retrieval_command = sqlalchemy.text(f"""SELECT * FROM book ORDER BY title ASC ;""")
-        book_res = db.execute(book_retrieval_command)  
-        db.commit()
-        allbooks = book_res.fetchall()
-    except Exception as e:
-        db.rollback()
+    #if no filter submission
+    else:
+        try:
+            book_retrieval_command = sqlalchemy.text(f"""SELECT * FROM book ORDER BY title ASC ;""")
+            book_res = db.execute(book_retrieval_command)  
+            db.commit()
+            allbooks = book_res.fetchall()
+        except Exception as e:
+            db.rollback()
 
     def convert_to_dict(tuple1, tuple2):
         resultDictionary = {tuple1[i] : tuple2[i] for i, _ in enumerate(tuple2)}
