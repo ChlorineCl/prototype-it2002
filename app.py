@@ -16,7 +16,7 @@ from typing import Dict
 from datetime import date
 
 # Importing our register and login forms
-from forms import RegistrationForm, LoginForm, PostForm, UpdateForm, BorrowForm, ReturnForm
+from forms import RegistrationForm, LoginForm, PostForm, UpdateForm, BorrowForm, ReturnForm, AddBookForm, DeleteBookForm
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -491,13 +491,55 @@ def return_book(post_id):
                     db.rollback() 
                     return Response(str(e), 403)
 
+@app.route("/manage_books", methods=['GET', 'POST'])
+@login_required
+def manage_books():
+    if current_user.id != 'group8@admin.nus':
+        flash('You are not authorised to access this page', 'danger')
+        return redirect(url_for('home'))
+    return render_template('manage_books.html', title='Manage Books')
+
+@app.route("/add_book", methods=['GET', 'POST'])
+@login_required
+def add_book():
+    if current_user.id != 'group8@admin.nus':
+        flash('You are not authorised to access this page', 'danger')
+        return redirect(url_for('home'))
+    form = AddBookForm()
+    if form.validate_on_submit():
+        try:
+            insertion_command = sqlalchemy.text(f"INSERT INTO book (isbn10, title, authors, publisher, genre) VALUES ('{form.data['isbn10']}', '{form.data['title']}', '{form.data['authors']}', '{form.data['publisher']}', '{form.data['genre']}');")
+            db.execute(insertion_command)
+            db.commit()
+            flash(f"{form.data['title']} written by {form.data['authors']} added successfully!", 'success')
+            return redirect(url_for('home'))
+        except Exception as e:
+            db.rollback()
+            return Response(str(e), 403)
+    return render_template('add_book.html', title='Add a Book', form=form)
+
+@app.route("/delete_book", methods=['GET', 'POST'])
+@login_required
+def delete_book():
+    if current_user.id != 'group8@admin.nus':
+        flash('You are not authorised to access this page', 'danger')
+        return redirect(url_for('home'))
+    form = DeleteBookForm()
+    if form.validate_on_submit():
+        try:
+            delete_command = sqlalchemy.text(f"DELETE FROM book WHERE isbn10='{form.data['isbn10']}';")
+            db.execute(delete_command)
+            db.commit()
+            flash(f"Book with isbn10 {form.data['isbn10']} deleted successfully!", 'success')
+            return redirect(url_for('home'))
+        except Exception as e:
+            db.rollback()
+            return Response(str(e), 403)
+    return render_template('delete_book.html', title='Delete a Book', form=form)
+
 
 @app.route("/stats")
 def stats():
-#     1. create a stats.html 
-#     2. do your sql stuff, store them in variables 
-#     3. go to ur stats.html and extract them and display them in the way you want
-# render_template('stats.html', title= 'Stats', stats=stats)
 
     stats = {}
 

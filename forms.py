@@ -38,6 +38,18 @@ class ReturnForm(FlaskForm):
     isbn10 = StringField('ISBN-10', validators=[DataRequired()])
     owner = StringField('Owner', validators=[DataRequired()])
     submit = SubmitField('Return')
+
+class AddBookForm(FlaskForm):
+    isbn10 = StringField('ISBN-10', validators=[DataRequired()])
+    title = StringField('Title', validators=[DataRequired()])
+    authors = StringField('Authors', validators=[DataRequired()])
+    publisher = StringField('Publisher', validators=[DataRequired()])
+    genre = StringField('Genres', validators=[DataRequired()])
+    submit = SubmitField('Add')
+
+class DeleteBookForm(FlaskForm):
+    isbn10 = StringField('ISBN-10', validators=[DataRequired()])
+    submit = SubmitField('Delete')
     
 FILTER_DATE = [
     ('Most Recent', 'Most Recent'),
