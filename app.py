@@ -98,11 +98,21 @@ def home():
 #Creating Books route
 @app.route("/books", methods=['GET', 'POST'])
 def books():
-    if request.method == 'POST':
-        filters = request.form.getlist('genre_checkbox')
-    #form = MyForm()
     template = ('isbn10', 'title', 'authors', 'publisher', 'genre')
     allbooks = []
+    if request.method == 'POST':
+        filters = request.form.getlist('genre_checkbox')
+        if len(filters)!= 0:
+            genre = filters[0]
+            str = "SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
+            for genre in filters[1:]:
+                newstr = "UNION SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
+                str += newstr
+            str = str + ";"
+            print(str)
+
+    #form = MyForm()
+
     try:
         book_retrieval_command = sqlalchemy.text(f"""SELECT * FROM book ORDER BY title ASC ;""")
         book_res = db.execute(book_retrieval_command)  
