@@ -100,21 +100,38 @@ def home():
 def books():
     template = ('isbn10', 'title', 'authors', 'publisher', 'genre')
     allbooks = []
+    retrieval_command_3 = sqlalchemy.text(f"""SELECT b.genre, COUNT(b.genre) FROM book b 
+                                                GROUP BY b.genre
+                                                ORDER BY COUNT(b.genre) ;
+                                                """)
+    res_3 = db.execute(retrieval_command_3)
+    db.commit()
+    res_3 = res_3.fetchall()
+
+    most_pop_genres = []
+    for i in res_3:
+        i = map(str, i[0].split('|'))
+        most_pop_genres += i
+    most_pop_genres_unique = []
+    for i in most_pop_genres:
+        if i not in most_pop_genres_unique:
+            most_pop_genres_unique.append(i)
+    print(most_pop_genres_unique)
 
     if request.method == 'POST': #if there is a filter submission
         filters = request.form.getlist('genre_checkbox')
         #appending all the genres to a string of query
         if len(filters)!= 0:
             genre = filters[0]
-            str = "SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
+            strng = "SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
             for genre in filters[1:]:
                 newstr = "UNION SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
-                str += newstr
-            str = str + ";"
-            print(str)
+                strng += newstr
+            strng = strng + ";"
+            print(strng)
         #doing the retrieval
         try:
-            book_retrieval_command = sqlalchemy.text(str)
+            book_retrieval_command = sqlalchemy.text(strng)
             book_res = db.execute(book_retrieval_command)  
             db.commit()
             allbooks = book_res.fetchall()
@@ -139,7 +156,7 @@ def books():
     for i in allbooks:
         result = convert_to_dict(template, i) 
         books.append(result)
-    return render_template('books.html', books=books, title='Books')
+    return render_template('books.html', books=books, title='Books', genres = most_pop_genres_unique )
 
 # Creating our register route
 @app.route("/register", methods=['GET', 'POST'])

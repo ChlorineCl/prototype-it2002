@@ -1,11 +1,16 @@
 {%extends "layout.html" %}
 {% block content %}
     <h1>Book List</h1>
+    <p>
+        You can choose to filter based on genre(s)!
+    </p>
     <form method="POST">
-        Action<input type="checkbox" value="Action" name="genre_checkbox">
-        Comedy<input type="checkbox" value="Comedy" name="genre_checkbox">
+        {% for i in genres %}
+            {{ i }}<input type="checkbox" value={{i}} name="genre_checkbox">
+        {% endfor %}
         <input type="submit">
     </form>
+    <p></p>
     {% for i in books %}
         <article class="media content-section">
             <div class="media-body">
