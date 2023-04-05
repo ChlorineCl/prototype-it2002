@@ -16,7 +16,7 @@ from typing import Dict
 from datetime import date
 
 # Importing our register and login forms
-from forms import RegistrationForm, LoginForm, PostForm, UpdateForm, BorrowForm
+from forms import RegistrationForm, LoginForm, PostForm, UpdateForm, BorrowForm, ReturnForm
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -219,6 +219,7 @@ def new_post():
 @login_required # Adding login_required decorator to ensure only logged in users can access this route
 def post(post_id):
     post = []
+    borrower = ""
     try:
         retrieve_post = sqlalchemy.text(f"""SELECT * FROM post WHERE post_id='{post_id}';""")
         res = db.execute(retrieve_post)
@@ -242,8 +243,25 @@ def post(post_id):
             result['title'] = thetitle[0]
 
             post.append(result)
-            
-            return render_template('post.html', title=result['title'], post=post)
+
+            try:
+                retrieve_borrower = sqlalchemy.text(f"""SELECT latest_transaction.borrower_email 
+                                                        FROM post p , (SELECT t.borrower_email, t.post_id, t.type
+                                                                        FROM transactions t
+                                                                        WHERE t.borrower_email = '{current_user.id}'
+                                                                        ORDER BY transaction_id DESC LIMIT 1 ) AS latest_transaction
+                                                        WHERE p.post_id = latest_transaction.post_id 
+                                                        AND latest_transaction.type = 'borrow';""")
+                borrower_res = db.execute(retrieve_borrower)
+                db.commit()
+                retrieved_borrower = borrower_res.fetchone()
+                if retrieved_borrower:
+                    borrower = retrieved_borrower[0]
+            except Exception as e:
+                db.rollback() 
+                return Response(str(e), 403)
+
+            return render_template('post.html', title=result['title'], post=post, borrower=borrower)
         else:
             return Response('Post not found', 404)
     except Exception as e:
@@ -356,13 +374,117 @@ def borrow_book(post_id):
                     update_post_command = sqlalchemy.text(f"""UPDATE post SET availability=False WHERE post_id={post_id};""")
                     db.execute(update_post_command)
                     db.commit()
-                    
+
                     flash(f'Book borrowed successfully. Enjoy it!', 'success')
                     return redirect(url_for('home'))
                 except Exception as e:
                     db.rollback() 
                     return Response(str(e), 403)
             return render_template('borrow_book.html', title='Book Borrowing', form=form)
+        else:
+            return Response('Post not found', 404)
+    except Exception as e:
+                    db.rollback() 
+                    return Response(str(e), 403)
+
+@app.route("/return")
+@login_required
+def return_post():
+    template = ('post_id', 'owner', 'isbn10', 'availability', 'date_posted')
+    allposts = []
+    try:
+        post_retrieval_command = sqlalchemy.text(f"""SELECT p.post_id, p.owner, p.isbn10, p.availability, p.post_date 
+                                                    FROM post p , (SELECT t.post_id, t.type
+                                                                    FROM transactions t
+                                                                    WHERE t.borrower_email = 'wbare0@ow.ly'
+                                                                    ORDER BY transaction_id DESC LIMIT 1 ) AS latest_transaction
+                                                    WHERE p.post_id = latest_transaction.post_id 
+                                                    AND latest_transaction.type = 'borrow';""")
+        post_res = db.execute(post_retrieval_command)  
+        db.commit()
+        allposts = post_res.fetchall()
+    except Exception as e:
+        db.rollback()
+
+    def convert_to_dict(tuple1, tuple2):
+        resultDictionary = {tuple1[i] : tuple2[i] for i, _ in enumerate(tuple2)}
+        return(resultDictionary)
+
+    post = []
+    for i in allposts:
+        i = i[0:4] + (i[4].strftime("%Y-%m-%d"),)
+        i = tuple(map(str, i))
+        result = convert_to_dict(template, i)
+        try:
+            title_retrieval_command = sqlalchemy.text(f"""SELECT b.title FROM book b WHERE b.isbn10 = '{result['isbn10']}';""")
+            retrieved_res = db.execute(title_retrieval_command)
+            db.commit()
+            thetitle = retrieved_res.fetchall()
+            result['title'] = thetitle[0][0]
+        except Exception as e:
+            db.rollback()    
+        post.append(result)
+
+    return render_template('return_post.html', post=post, title='Books available to return')
+
+@app.route("/post/<int:post_id>/return_book", methods=['GET', 'POST'])
+@login_required
+def return_book(post_id):
+    try:
+        retrieve_post = sqlalchemy.text(f"""SELECT * FROM post WHERE post_id='{post_id}';""")
+        res = db.execute(retrieve_post)
+        db.commit()
+        retrieved_post = res.fetchone()
+        if retrieved_post:
+            if retrieved_post[3] == True:
+                flash('This book belonging to this post has already been returned', 'danger')
+                return redirect(url_for('post', post_id = post_id))
+            
+            retrieve_title = sqlalchemy.text(f"""SELECT b.title FROM book b WHERE b.isbn10='{retrieved_post[2]}';""")
+            res2 = db.execute(retrieve_title)
+            db.commit()
+            retrieved_title = res2.fetchone()
+
+            form = ReturnForm()
+            form.post_id.data = retrieved_post[0]
+            form.title.data = retrieved_title[0]
+            form.isbn10.data = retrieved_post[2]
+            form.owner.data = retrieved_post[1]
+            if form.validate_on_submit():
+                if current_user.id == retrieved_post[1]:
+                    flash('You cannot return books owned by you', 'danger')
+                    return redirect(url_for('post', post_id = post_id))
+                
+                retrieve_borrower = sqlalchemy.text(f"""SELECT borrower_email FROM transactions WHERE post_id='{post_id}';""")
+                resb = db.execute(retrieve_borrower)
+                db.commit()
+                retrieved_borrower = resb.fetchone()
+                if retrieved_borrower[0] != current_user.id:
+                    flash('You are not the borrower of this book from this post', 'danger')
+                    return redirect(url_for('post', post_id = post_id)) 
+
+                try:
+                    returner = current_user.id
+                    retrieve_transaction_id = sqlalchemy.text(f"""SELECT MAX(transaction_id) FROM transactions;""")
+                    res3 = db.execute(retrieve_transaction_id)
+                    db.commit()
+                    retrieved_transaction_id = res3.fetchone()
+
+                    insert_command = sqlalchemy.text(f"""INSERT INTO transactions (transaction_id, post_id, borrower_email, lender_email, transaction_date, type) VALUES
+                    ('{retrieved_transaction_id[0] + 1}', '{post_id}', '{returner}', '{retrieved_post[1]}', '{date.today()}', 'return');""")
+                    db.execute(insert_command)
+                    db.commit()
+
+                    update_post_command = sqlalchemy.text(f"""UPDATE post SET availability=True WHERE post_id={post_id};""")
+                    db.execute(update_post_command)
+                    db.commit()
+
+                    flash(f'Book returned successfully. Thanks!', 'success')
+                    return redirect(url_for('home'))
+                except Exception as e:
+                    db.rollback() 
+                    return Response(str(e), 403)
+            return render_template('return_book.html', title='Book Returning', form=form)
         else:
             return Response('Post not found', 404)
     except Exception as e:

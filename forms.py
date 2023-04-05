@@ -31,3 +31,11 @@ class BorrowForm(FlaskForm):
     isbn10 = StringField('ISBN-10', validators=[DataRequired()])
     owner = StringField('Owner', validators=[DataRequired()])
     submit = SubmitField('Borrow')
+
+class ReturnForm(FlaskForm):
+    post_id = IntegerField('Post ID', validators=[DataRequired()])
+    title = StringField('Title', validators=[DataRequired()])
+    isbn10 = StringField('ISBN-10', validators=[DataRequired()])
+    owner = StringField('Owner', validators=[DataRequired()])
+    submit = SubmitField('Return')
+    
