@@ -281,12 +281,133 @@ def update_post(post_id):
             db.rollback() 
             return Response(str(e), 403)
 
-# @app.route("/stats")
-# def stats():
+@app.route("/borrow")
+@login_required
+def borrow():
+    template = ('post_id', 'owner', 'isbn10', 'availability', 'date_posted')
+    allposts = []
+    try:
+        post_retrieval_command = sqlalchemy.text(f"""SELECT * FROM post WHERE availability=True ORDER BY post_date DESC ;""")
+        post_res = db.execute(post_retrieval_command)  
+        db.commit()
+        allposts = post_res.fetchall()
+    except Exception as e:
+        db.rollback()
+
+    def convert_to_dict(tuple1, tuple2):
+        resultDictionary = {tuple1[i] : tuple2[i] for i, _ in enumerate(tuple2)}
+        return(resultDictionary)
+
+    post = []
+    for i in allposts:
+        i = i[0:4] + (i[4].strftime("%Y-%m-%d"),)
+        i = tuple(map(str, i))
+        result = convert_to_dict(template, i)
+        try:
+            title_retrieval_command = sqlalchemy.text(f"""SELECT b.title FROM book b WHERE b.isbn10 = '{result['isbn10']}';""")
+            retrieved_res = db.execute(title_retrieval_command)
+            db.commit()
+            thetitle = retrieved_res.fetchall()
+            result['title'] = thetitle[0][0]
+        except Exception as e:
+            db.rollback()    
+        post.append(result)
+    return render_template('borrow_post.html', post=post, title='Books available to borrow')
+
+
+@app.route("/stats")
+def stats():
 #     1. create a stats.html 
 #     2. do your sql stuff, store them in variables 
 #     3. go to ur stats.html and extract them and display them in the way you want
 # render_template('stats.html', title= 'Stats', stats=stats)
+
+    stats = {}
+
+    def convert_to_dict(tuple1, tuple2):
+        resultDictionary = {tuple1[i] : tuple2[i] for i, _ in enumerate(tuple2)}
+        return(resultDictionary)
+    
+    try:
+        # Top 5 most popz books
+        retrieval_command_1 = sqlalchemy.text(f"""SELECT b.title, COUNT(b.title) FROM post p, transactions t, book b
+                                                WHERE p.post_id = t.post_id AND p.isbn10 = b.isbn10 AND t.type = 'borrow'
+                                                GROUP BY b.title
+                                                ORDER BY COUNT(b.title) DESC
+                                                LIMIT 5;;""")
+        res_1 = db.execute(retrieval_command_1)
+        db.commit()
+        res_1 = res_1.fetchall()
+        most_pop_books = [str(i[0]) for i in res_1]
+        stats['most_pop_books'] = most_pop_books
+
+        #Top 5 most popz authors
+        retrieval_command_2 = sqlalchemy.text(f"""SELECT b.authors, COUNT(b.authors) FROM post p, transactions t, book b
+                                                WHERE p.post_id = t.post_id AND p.isbn10 = b.isbn10 AND t.type = 'borrow'
+                                                GROUP BY b.authors
+                                                ORDER BY COUNT(b.authors) DESC
+                                                LIMIT 5;""")
+        res_2 = db.execute(retrieval_command_2)
+        db.commit()
+        res_2 = res_2.fetchall()
+        most_pop_authors = [str(i[0]) for i in res_2]
+        stats['most_pop_authors'] = most_pop_authors
+
+        #Top 5 most popz genres
+        retrieval_command_3 = sqlalchemy.text(f"""SELECT b.genre, COUNT(b.genre) FROM post p, transactions t, book b
+                                                WHERE p.post_id = t.post_id AND p.isbn10 = b.isbn10 AND t.type = 'borrow'
+                                                GROUP BY b.genre
+                                                ORDER BY COUNT(b.genre) DESC;
+                                                """)
+        res_3 = db.execute(retrieval_command_3)
+        db.commit()
+        res_3 = res_3.fetchall()
+
+        most_pop_genres = []
+        for i in res_3:
+            i = map(str, i[0].split('|'))
+            most_pop_genres += i
+        most_pop_genres_unique = []
+        for i in most_pop_genres:
+            if i not in most_pop_genres_unique:
+                most_pop_genres_unique.append(i)
+        if len(most_pop_genres_unique) <= 5:
+            stats['most_pop_genres'] = most_pop_genres_unique
+        else:
+            stats['most_pop_genres'] = most_pop_genres_unique[0:5]
+        
+
+        # Top 5 most avid borrowers
+        retrieval_command_4 = sqlalchemy.text(f"""SELECT u.username, u.email, COUNT(u.email) FROM users u, transactions t
+                                                WHERE u.email = t.borrower_email AND t.type = 'borrow'
+                                                GROUP BY u.email
+                                                ORDER BY COUNT(u.email) DESC
+                                                LIMIT 5;""")
+        res_4 = db.execute(retrieval_command_4)
+        db.commit()
+        res_4 = res_4.fetchall()
+        top_borrowers  = [str(i[0]) for i in res_4]
+        stats['top_borrowers'] = top_borrowers  
+
+
+        # Top 5 most avid lenders
+        retrieval_command_5 = sqlalchemy.text(f"""SELECT u.username, u.email, COUNT(u.email) FROM users u, transactions t
+                                                WHERE u.email = t.lender_email AND t.type = 'borrow'
+                                                GROUP BY u.email
+                                                ORDER BY COUNT(u.email) DESC
+                                                LIMIT 5;""")
+        res_5 = db.execute(retrieval_command_5)
+        db.commit()
+        res_5 = res_5.fetchall()
+        top_lenders  = [str(i[0]) for i in res_5]
+        stats['top_lenders'] = top_lenders    
+    
+    except Exception as e:
+        db.rollback()
+
+    return render_template('stats.html', title= 'What\'s Hot', stats=stats)
+
+
 
 # ? A dictionary containing
 data_types = {
