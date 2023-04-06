@@ -23,9 +23,9 @@
         <br>
         <br>
         <h6>Filter by availability</h6>
-        <input type="checkbox" value="True" name='avail_radio' > Available
+        <input type="radio" value="True" name='avail_radio' > Available
         <br>
-        <input type="checkbox" value="False" name='avail_radio' > Unavailable
+        <input type="radio" value="False" name='avail_radio' > Unavailable
         <br>
         <br>
         <h6>Order by title</h6>
@@ -38,8 +38,9 @@
         <input type="radio" value="DESC" name='date_radio' > Newest -> Oldest
         <br>
         <input type="radio" value="ASC" name='date_radio' > Oldest -> Newest
+        <br>
         <br>    
         <input type="submit" value="Apply Filter">
-        <input type="reset" >
+        <input type="reset" value="Clear" >
     </form>
 {% endblock filter %}

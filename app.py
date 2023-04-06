@@ -71,21 +71,22 @@ def home():
     if request.method == 'POST': #if there is a filter submission
         title = request.form.getlist('title_search')
         availability = request.form.getlist('avail_radio')
+        dateorder = request.form.getlist('date_radio')
         ordering = request.form.getlist('order_radio')
 
-        str1 = "SELECT * FROM post p "
-        if title or availability:
-            str1 += "WHERE "
-            if title:
-                str1 += "p.isbn10 IN (SELECT b.isbn10 FROM book b WHERE b.title LIKE '%" + title[0] + "%') "
-                if availability:
-                    str1 += "AND p.availability = " + availability[0] + " "
-            else:
-                str1 += "p.availability = " + availability[0] + " "
-
-        if ordering:
-            str1 += "ORDER BY p.post_date " + ordering[0]
-        print(str1)
+        str1 = "SELECT p.post_id, p.owner, p.isbn10, p.availability, p.post_date FROM post p, book b WHERE p.isbn10 = b.isbn10 "
+        if title:
+            str1 += "AND  b.title LIKE '%" + title[0] + "%' "
+        if availability:
+            str1 += "AND p.availability = " + availability[0] + " "
+        if dateorder:
+            str1 += "ORDER BY p.post_date " + dateorder[0]
+            if ordering:
+                str1 += ", b.title " + ordering[0]
+        else:
+            if ordering:
+                str1 += "ORDER BY b.title " + ordering[0]
+        # print(str1)
 
         try:
             post_retrieval_command = sqlalchemy.text(str1)
