@@ -67,13 +67,43 @@ db = engine.connect()
 def home():
     template = ('post_id', 'owner', 'isbn10', 'availability', 'date_posted')
     allposts = []
-    try:
-        post_retrieval_command = sqlalchemy.text(f"""SELECT * FROM post ORDER BY post_date DESC ;""")
-        post_res = db.execute(post_retrieval_command)  
-        db.commit()
-        allposts = post_res.fetchall()
-    except Exception as e:
-        db.rollback()
+
+    if request.method == 'POST': #if there is a filter submission
+        title = request.form.getlist('title_search')
+        availability = request.form.getlist('avail_radio')
+        ordering = request.form.getlist('order_radio')
+
+        str1 = "SELECT * FROM post p "
+        if title or availability:
+            str1 += "WHERE "
+            if title:
+                str1 += "p.title LIKE '%" + title[0] + "%' "
+                if availability:
+                    str1 += "AND p.availabitity = " + availability[0] + " "
+            else:
+                str1 += "p.availabitity = " + availability[0] + " "
+
+        if ordering:
+            str1 += "ORDER BY p.post_date " + ordering[0]
+        print(str1)
+
+        try:
+            post_retrieval_command = sqlalchemy.text(str1)
+            post_res = db.execute(post_retrieval_command)  
+            db.commit()
+            allposts = post_res.fetchall()
+        except Exception as e:
+            db.rollback()
+
+            
+    else: #if there is no filters
+        try:
+            post_retrieval_command = sqlalchemy.text(f"""SELECT * FROM post ORDER BY post_date DESC ;""")
+            post_res = db.execute(post_retrieval_command)  
+            db.commit()
+            allposts = post_res.fetchall()
+        except Exception as e:
+            db.rollback()
 
     def convert_to_dict(tuple1, tuple2):
         resultDictionary = {tuple1[i] : tuple2[i] for i, _ in enumerate(tuple2)}

@@ -23,29 +23,22 @@
         <br>
         <br>
         <h6>Filter by availability</h6>
-        <input type="checkbox" value="ASC" name='order_radio' >Available
+        <input type="checkbox" value="True" name='avail_radio' > Available
         <br>
-        <input type="checkbox" value="DESC" name='order_radio' >Unavailable
+        <input type="checkbox" value="False" name='avail_radio' > Unavailable
         <br>
         <br>
         <h6>Order by title</h6>
-        <input type="radio" value="ASC" name='order_radio' >A -> Z
+        <input type="radio" value="ASC" name='order_radio' > A -> Z
         <br>
-        <input type="radio" value="DESC" name='order_radio' >Z -> A
-        <br>
-        <br>
-        <h6>Order by popularity</h6>
-        <input type="radio" value="DESC" name='pops_radio' >Most popular
-        <br>
-        <input type="radio" value="ASC" name='pops_radio' >Least popular
+        <input type="radio" value="DESC" name='order_radio' > Z -> A
         <br>
         <br>
-        <h6>Filter by genre</h6>
-        {% for i in genres %}
-            <input type="checkbox" value={{i}} name="genre_checkbox">{{ i }}
-            <br>
-        {% endfor %}
-        
+        <h6>Order by date posted</h6>
+        <input type="radio" value="DESC" name='date_radio' > Newest -> Oldest
+        <br>
+        <input type="radio" value="ASC" name='date_radio' > Oldest -> Newest
+        <br>    
         <input type="submit" value="Apply Filter">
         <input type="reset" >
     </form>
