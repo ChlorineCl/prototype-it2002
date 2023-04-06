@@ -58,6 +58,17 @@
 
     <article class="media content-section">
         <div class="media-body">
+        <h2><a class="article-title" href="#">{{ "Most Active Lender for Each Genre" }}</a></h2>
+        <div class="article-metadata">
+            <a class="mr-2" href="#">{{ "All time" }}</a>
+        </div>
+        <p class="article-content">{% for i in stats['lends_most'] %} {{ i + ": " + stats['lends_most'][i][0][0] }} 
+        {% endfor %} </p>
+        </div>
+    </article>
+
+    <article class="media content-section">
+        <div class="media-body">
         <h2><a class="article-title" href="#">{{ "Top 5 Most Frequently Posted Books" }}</a></h2>
         <div class="article-metadata">
             <a class="mr-2" href="#">{{ "All time, desc." }}</a>
@@ -89,15 +100,6 @@
         </div>
     </article>
 
-    <article class="media content-section">
-        <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Best Lender for Each Genre" }}</a></h2>
-        <div class="article-metadata">
-            <a class="mr-2" href="#">{{ "All time" }}</a>
-        </div>
-        <p class="article-content">{% for i in stats['lends_most'] %} {{ i + ": " + stats['lends_most'][i] }} 
-        {% endfor %} </p>
-        </div>
-    </article>
+    
 
 {% endblock content%}

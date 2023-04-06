@@ -260,7 +260,57 @@ def logout():
 @app.route("/account")
 @login_required
 def account():
-    return render_template('account.html', title='Account')
+    user_stats = {}
+    id = current_user.id
+    
+    # Books that current user is currently borrowing
+    retrieval_command_1 = sqlalchemy.text(f"""SELECT one.borrower_email, one.isbn10, one.title
+                                            FROM 
+                                                (SELECT t.borrower_email, b.isbn10, b.title
+                                                FROM transactions t, post p, book b
+                                                WHERE t.post_id = p.post_id AND p.isbn10 = b.isbn10
+                                                AND t.borrower_email = '{ id }'
+                                                AND t.type = 'borrow') AS one
+                                            WHERE NOT EXISTS (SELECT t.borrower_email, b.isbn10, b.title
+                                                FROM transactions t, post p, book b
+                                                WHERE t.post_id = p.post_id AND p.isbn10 = b.isbn10
+                                                AND t.borrower_email = '{ id }'
+                                                AND t.type = 'return')
+                                                GROUP BY one.borrower_email, one.isbn10, one.title;""") 
+    res_1 = db.execute(retrieval_command_1)
+    db.commit()
+    res_1 = res_1.fetchall()
+    books = []
+    for i in res_1:
+        book = [str(i[1]), str(i[2])]
+        books.append(book)
+    user_stats['books_borrowed'] = books
+
+    # Books that current user is currently lending
+    retrieval_command_2 = sqlalchemy.text(f"""SELECT one.lender_email, one.isbn10, one.title
+                                            FROM 
+                                                (SELECT t.lender_email, b.isbn10, b.title
+                                                FROM transactions t, post p, book b
+                                                WHERE t.post_id = p.post_id AND p.isbn10 = b.isbn10
+                                                AND t.lender_email = '{ id }'
+                                                AND t.type = 'borrow'
+                                                ) AS one
+                                            WHERE NOT EXISTS (SELECT t.lender_email, b.isbn10, b.title
+                                                FROM transactions t, post p, book b
+                                                WHERE t.post_id = p.post_id AND p.isbn10 = b.isbn10
+                                                AND t.lender_email = '{ id }'
+                                                AND t.type = 'return')
+                                            GROUP BY one.lender_email, one.isbn10, one.title;""") 
+    res_2 = db.execute(retrieval_command_2)
+    db.commit()
+    res_2 = res_2.fetchall()
+    books2 = []
+    for i in res_2:
+        book2 = [str(i[1]), str(i[2])]
+        books2.append(book2)
+    user_stats['books_lended'] = books2
+    
+    return render_template('account.html', title='Account', user_stats = user_stats)
     
 #create post
 @app.route("/post/new", methods=['GET', 'POST'])
@@ -778,47 +828,48 @@ def stats():
         stats['shortest'] = shortest[0:5]
 
         # For each genre in transactions, find the lender who lends most of it
-        retrieval_command_8 = sqlalchemy.text(f"""SELECT B.genre, A.username, B.email, B.count
-                                                FROM
-                                                    users AS A,
-                                                    (SELECT temp1.genre, temp2.email, temp2.count
-                                                    FROM 
-                                                        (SELECT temp.genre, MAX(temp.count)
+        retrieval_command_8 = sqlalchemy.text(f"""SELECT B.genre, A.username, B.lender_email, B.count
+                                                    FROM
+                                                        users AS A,
+                                                        (SELECT temp1.genre, temp2.lender_email, temp2.count
                                                         FROM 
-                                                            (SELECT one.genre, two.email, COUNT(two.email)
-                                                                FROM 
-                                                                    (SELECT b.genre
-                                                                    FROM book b
-                                                                    GROUP BY b.genre) AS one,
-
-                                                                    (SELECT b.genre, u.email
-                                                                    FROM book b, post p, transactions t, users u
-                                                                    WHERE b.isbn10 = p.isbn10 AND p.post_id=t.post_id AND u.email = t.lender_email
-                                                                    AND t.type = 'borrow') AS two
-                                                                WHERE one.genre = two.genre
-                                                            GROUP BY one.genre, two.email) AS temp
+                                                            (SELECT temp.genre, MAX(temp.count)
+                                                            FROM 
+                                                                (SELECT b.genre, t.lender_email, COUNT(t.transaction_id)
+                                                                FROM transactions t, post p, book b
+                                                                WHERE t.type='borrow'
+                                                                AND t.post_id = p.post_id AND p.isbn10 = b.isbn10
+                                                                GROUP BY t.lender_email, b.genre
+                                                                ORDER BY COUNT(t.transaction_id) DESC, b.genre) AS temp
                                                         GROUP BY temp.genre) AS temp1,
-                                                        (SELECT one.genre, two.email, COUNT(two.email)
-                                                                FROM 
-                                                                    (SELECT b.genre
-                                                                    FROM book b
-                                                                    GROUP BY b.genre) AS one,
-
-                                                                    (SELECT b.genre, u.email
-                                                                    FROM book b, post p, transactions t, users u
-                                                                    WHERE b.isbn10 = p.isbn10 AND p.post_id=t.post_id AND u.email = t.lender_email
-                                                                    AND t.type = 'borrow') AS two
-                                                                WHERE one.genre = two.genre
-                                                            GROUP BY one.genre, two.email) AS temp2
-                                                    WHERE temp1.genre = temp2.genre AND temp1.max = temp2.count) AS B
-                                                WHERE A.email = B.email;""")
+                                                        (SELECT b.genre, t.lender_email, COUNT(t.transaction_id)
+                                                        FROM transactions t, post p, book b
+                                                        WHERE t.type='borrow'
+                                                        AND t.post_id = p.post_id AND p.isbn10 = b.isbn10
+                                                        GROUP BY t.lender_email, b.genre
+                                                        ORDER BY COUNT(t.transaction_id) DESC, b.genre) AS temp2
+                                                        WHERE temp1.genre = temp2.genre AND temp1.max = temp2.count) AS B
+                                                    WHERE A.email = B.lender_email""")
         res_8 = db.execute(retrieval_command_8)
         db.commit()
         res_8 = res_8.fetchall()
-        lends_most  = {}
+        # lends_most  = {}
+        # for i in res_8:
+        #     lends_most[str(i[0])] = str(i[1])
+        # stats['lends_most'] = lends_most
+        dict = {}
         for i in res_8:
-            lends_most[str(i[0])] = str(i[1])
-        stats['lends_most'] = lends_most
+            genrelist = list(map(str, i[0].split('|')))
+            for j in genrelist:
+                if j not in dict:
+                    dict[j] = []
+                    dict[j].append( [ str(i[1]), int(i[3]) ] )
+                else:
+                    dict[j].append( [ str(i[1]), int(i[3]) ] )
+        for k,v in dict.items():
+            v.sort(key=lambda x:x[1], reverse=True)
+            v = v[0]
+        stats['lends_most'] = dict
 
     except Exception as e:
         db.rollback()
