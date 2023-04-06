@@ -1,6 +1,21 @@
 {%extends "layout.html" %}
 {% block content %}
     <h1>Book List</h1>
+    {% for i in books %}
+        <article class="media content-section">
+            <div class="media-body">
+            <div class="article-metadata">
+                <a class="mr-2" href="#">{{ i['authors'] }}</a>
+                <small class="text-muted">{{ i['publisher'] }}</small>
+            </div>
+            <h2><a class="article-title" href="{{ url_for('books', title = i['title'])}}">{{ i['title'] }}</a></h2>
+            <p class="article-content">{{ "ISBN10: " + i['isbn10'] + ", Genre: " + i['genre']}}</p>
+            </div>
+        </article>
+    {% endfor %}
+{% endblock content%}
+ 
+{% block filter %}
     <h5>Let's get specific!</h5>
     <form method="POST">
         <label for="title-search">Search title:</label>
@@ -25,17 +40,4 @@
         <input type="submit" value="Apply Filter">
         <input type="reset" >
     </form>
-    {% for i in books %}
-        <article class="media content-section">
-            <div class="media-body">
-            <div class="article-metadata">
-                <a class="mr-2" href="#">{{ i['authors'] }}</a>
-                <small class="text-muted">{{ i['publisher'] }}</small>
-            </div>
-            <h2><a class="article-title" href="{{ url_for('books', title = i['title'])}}">{{ i['title'] }}</a></h2>
-            <p class="article-content">{{ "ISBN10: " + i['isbn10'] + ", Genre: " + i['genre']}}</p>
-            </div>
-        </article>
-    {% endfor %}
-{% endblock content%}
- 
+{% endblock filter %}
