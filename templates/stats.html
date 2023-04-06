@@ -3,7 +3,7 @@
     <h1>WHAT'S HOT</h1>
     <article class="media content-section">
         <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Top 5 Most Popular Books" }}</a></h2>
+        <h2><a id="1" class="article-title" href="#">{{ "Top 5 Most Popular Books" }}</a></h2>
         <div class="article-metadata">
             <a class="mr-2" href="#">{{ "All time, desc." }}</a>
         </div>
@@ -14,7 +14,7 @@
 
     <article class="media content-section">
         <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Top 5 Most Popular Authors" }}</a></h2>
+        <h2><a id="2" class="article-title" href="#">{{ "Top 5 Most Popular Authors" }}</a></h2>
         <div class="article-metadata">
             <a class="mr-2" href="#">{{ "All time, desc." }}</a>
         </div>
@@ -25,7 +25,7 @@
 
     <article class="media content-section">
         <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Top 5 Most Popular Genres" }}</a></h2>
+        <h2><a id="3" class="article-title" href="#">{{ "Top 5 Most Popular Genres" }}</a></h2>
         <div class="article-metadata">
             <a class="mr-2" href="#">{{ "All time, desc." }}</a>
         </div>
@@ -36,7 +36,7 @@
 
     <article class="media content-section">
         <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Top 5 Most Avid Borrowers" }}</a></h2>
+        <h2><a id="4" class="article-title" href="#">{{ "Top 5 Most Avid Borrowers" }}</a></h2>
         <div class="article-metadata">
             <a class="mr-2" href="#">{{ "All time, desc." }}</a>
         </div>
@@ -47,7 +47,7 @@
 
     <article class="media content-section">
         <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Top 5 Most Avid Lenders" }}</a></h2>
+        <h2><a id="5" class="article-title" href="#">{{ "Top 5 Most Avid Lenders" }}</a></h2>
         <div class="article-metadata">
             <a class="mr-2" href="#">{{ "All time, desc." }}</a>
         </div>
@@ -58,7 +58,7 @@
 
     <article class="media content-section">
         <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Most Active Lender for Each Genre" }}</a></h2>
+        <h2><a id="6" class="article-title" href="#">{{ "Most Active Lender for Each Genre" }}</a></h2>
         <div class="article-metadata">
             <a class="mr-2" href="#">{{ "All time" }}</a>
         </div>
@@ -69,7 +69,7 @@
 
     <article class="media content-section">
         <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Top 5 Most Frequently Posted Books" }}</a></h2>
+        <h2><a id="7" class="article-title" href="#">{{ "Top 5 Most Frequently Posted Books" }}</a></h2>
         <div class="article-metadata">
             <a class="mr-2" href="#">{{ "All time, desc." }}</a>
         </div>
@@ -80,7 +80,7 @@
 
     <article class="media content-section">
         <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Books Borrowed for the Longest Time" }}</a></h2>
+        <h2><a id="8" class="article-title" href="#">{{ "Books Borrowed for the Longest Time" }}</a></h2>
         <div class="article-metadata">
             <a class="mr-2" href="#">{{ "All time, desc." }}</a>
         </div>
@@ -91,7 +91,7 @@
 
     <article class="media content-section">
         <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Books Borrowed for the Shortest Time" }}</a></h2>
+        <h2><a id="9" class="article-title" href="#">{{ "Books Borrowed for the Shortest Time" }}</a></h2>
         <div class="article-metadata">
             <a class="mr-2" href="#">{{ "All time" }}</a>
         </div>
@@ -100,6 +100,17 @@
         </div>
     </article>
 
-    
-
 {% endblock content%}
+
+{% block filter %}
+    <h5>Jump to Juicy Content</h5>
+    <a href="#1">Top 5 Most Popular Books</a><br>
+    <a href="#2">Top 5 Most Popular Authors</a><br>
+    <a href="#3">Top 5 Most Popular Genres</a><br>
+    <a href="#4">Top 5 Most Avid Borrowers</a><br>
+    <a href="#5">Top 5 Most Avid Lenders</a><br>
+    <a href="#6">Most Active Lender for Each Genre</a><br>
+    <a href="#7">Top 5 Most Frequently Posted Books</a><br>
+    <a href="#8">Books Borrowed for the Longest Time</a><br>
+    <a href="#9">Books Borrowed for the Shortest Time</a>
+{% endblock filter %}
