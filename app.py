@@ -123,12 +123,14 @@ def books():
         filters = request.form.getlist('genre_checkbox')
         ordering = request.form.getlist('order_radio')
         pops = request.form.getlist('pops_radio')
+        title = request.form.getlist('title_search')
 
         if pops:
             newstr1 ="""SELECT b.isbn10, b.title, b.authors, b.publisher, b.genre
                             FROM post p, transactions t, book b
                             WHERE p.post_id = t.post_id AND p.isbn10 = b.isbn10 AND t.type = 'borrow'"""
             newstr2 = ""
+            newstr21 = ""
             newstr3 = """ GROUP BY b.isbn10
                             ORDER BY COUNT(b.isbn10) """ + pops[0] 
             newstr4 = ""
@@ -138,9 +140,11 @@ def books():
                 for genre in filters[1:]:
                     newstr2 += "OR b.genre LIKE '%" + genre + "%' "
                 newstr2 += ") "
+            if title:
+                newstr21 = "AND b.title LIKE '%" + title[0] + "%' "
             if ordering:
                 newstr4 = ", b.title " + ordering[0]
-            strng = newstr1 + newstr2 + newstr3 + newstr4
+            strng = newstr1 + newstr2 + newstr21 + newstr3 + newstr4
             
         #appending all the genres to a string of query
         else:
@@ -151,12 +155,18 @@ def books():
                     newstr = "UNION SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
                     strng += newstr
                 
+            if title:
+                if filters:
+                    strng += "INTERSECT SELECT * FROM book b WHERE b.title LIKE '%" + title[0] + "%' "
+                else:
+                    strng = "SELECT * FROM book b WHERE b.title LIKE '%" + title[0] + "%' "
+
             if ordering:
                 newstr = "ORDER BY b.title " + ordering[0]
                 strng += newstr
             
         strng = strng + ";"
-        print(strng)
+        #print(strng) 
         #doing the retrieval
         try:
             book_retrieval_command = sqlalchemy.text(strng)
