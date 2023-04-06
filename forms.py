@@ -62,6 +62,10 @@ class UpdateBookForm(FlaskForm):
 class DeleteBookForm(FlaskForm):
     isbn10 = StringField('ISBN-10', validators=[DataRequired()])
     submit = SubmitField('Delete')
+
+class DeleteUserForm(FlaskForm):
+    email = StringField('User Email', validators=[DataRequired()])
+    submit = SubmitField('Delete')
     
 FILTER_DATE = [
     ('Most Recent', 'Most Recent'),

@@ -16,7 +16,7 @@ from typing import Dict
 from datetime import date
 
 # Importing our register and login forms
-from forms import RegistrationForm, LoginForm, PostForm, UpdateForm, BorrowForm, ReturnForm, AddBookForm, DeleteBookForm, ISBN10Form, UpdateBookForm
+from forms import RegistrationForm, LoginForm, PostForm, UpdateForm, BorrowForm, ReturnForm, AddBookForm, DeleteBookForm, ISBN10Form, UpdateBookForm, DeleteUserForm
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -62,8 +62,8 @@ db = engine.connect()
 
 # Creating our home page which is where the posts would show up
 
-@app.route("/")
-@app.route("/home")
+@app.route("/", methods=['GET', 'POST'])
+@app.route("/home", methods=['GET', 'POST'])
 def home():
     template = ('post_id', 'owner', 'isbn10', 'availability', 'date_posted')
     allposts = []
@@ -77,11 +77,11 @@ def home():
         if title or availability:
             str1 += "WHERE "
             if title:
-                str1 += "p.title LIKE '%" + title[0] + "%' "
+                str1 += "p.isbn10 IN (SELECT b.isbn10 FROM book b WHERE b.title LIKE '%" + title[0] + "%') "
                 if availability:
-                    str1 += "AND p.availabitity = " + availability[0] + " "
+                    str1 += "AND p.availability = " + availability[0] + " "
             else:
-                str1 += "p.availabitity = " + availability[0] + " "
+                str1 += "p.availability = " + availability[0] + " "
 
         if ordering:
             str1 += "ORDER BY p.post_date " + ordering[0]
@@ -688,13 +688,13 @@ def return_book(post_id):
                     db.rollback() 
                     return Response(str(e), 403)
 
-@app.route("/manage_books", methods=['GET', 'POST'])
+@app.route("/manage", methods=['GET', 'POST'])
 @login_required
-def manage_books():
+def manage():
     if current_user.id != 'group8@admin.nus':
         flash('You are not authorised to access this page', 'danger')
         return redirect(url_for('home'))
-    return render_template('manage_books.html', title='Manage Books')
+    return render_template('manage.html', title='Manage Books')
 
 @app.route("/add_book", methods=['GET', 'POST'])
 @login_required
@@ -740,12 +740,6 @@ def update_this_book(isbn10):
     if current_user.id != 'group8@admin.nus':
         flash('You are not authorised to access this page', 'danger')
         return redirect(url_for('home'))
-    
-
-    retrieval_command = sqlalchemy.text(f"""SELECT * FROM book WHERE isbn10='{isbn10}';""")
-    res = db.execute(retrieval_command)
-    db.commit()
-    retrieved_book = res.fetchone()
 
     form = UpdateBookForm()
 
@@ -760,7 +754,7 @@ def update_this_book(isbn10):
             db.execute(update_command)
             db.commit()
             flash(f'Book updated for {isbn10} successfully!', 'success')
-            return redirect(url_for('manage_books'))
+            return redirect(url_for('manage'))
         except Exception as e:
             db.rollback()
             return Response(str(e), 403)
@@ -786,6 +780,33 @@ def delete_book():
             db.rollback()
             return Response(str(e), 403)
     return render_template('delete_book.html', title='Delete a Book', form=form)
+
+@app.route("/delete_user", methods=['GET', 'POST'])
+@login_required
+def delete_user():
+    if current_user.id != 'group8@admin.nus':
+        flash('You are not authorised to access this page', 'danger')
+        return redirect(url_for('home'))
+    form = DeleteUserForm()
+    if form.validate_on_submit():
+        retrieval_command = sqlalchemy.text(f"SELECT * FROM users WHERE email='{form.data['email']}';")
+        res = db.execute(retrieval_command)
+        db.commit()
+        res = res.fetchone()
+        if res:
+            try:
+                delete_command = sqlalchemy.text(f"DELETE FROM users WHERE email='{form.data['email']}';")
+                db.execute(delete_command)
+                db.commit()
+                flash(f"User with email {form.data['email']} deleted successfully!", 'success')
+                return redirect(url_for('home'))
+            except Exception as e:
+                db.rollback()
+                return Response(str(e), 403)
+        else:
+            flash(f"User with {form.data['email']} not found. Kindly check whether you have input the correct email", "danger")
+            return redirect(url_for('manage'))
+    return render_template('delete_user.html', title='Delete a User', form=form)
 
 
 @app.route("/stats")

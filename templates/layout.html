@@ -46,7 +46,7 @@
                         <div class="navbar-nav">
                             {% if current_user.is_authenticated %}
                               {% if current_user.id == 'group8@admin.nus' %}
-                                <a class="nav-item nav-link" href="{{ url_for('manage_books') }}">Manage Books</a>
+                                <a class="nav-item nav-link" href="{{ url_for('manage') }}">Manage</a>
                               {% endif %}
                               <a class="nav-item nav-link" href="{{ url_for('account') }}">Account</a>
                               <a class="nav-item nav-link" href="{{ url_for('logout') }}">Logout</a>
