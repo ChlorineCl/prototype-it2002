@@ -658,8 +658,130 @@ def stats():
         db.commit()
         res_5 = res_5.fetchall()
         top_lenders  = [str(i[0]) for i in res_5]
-        stats['top_lenders'] = top_lenders    
-    
+        stats['top_lenders'] = top_lenders
+
+        # Top 5 most frequently posted books
+        retrieval_command_6 = sqlalchemy.text(f"""SELECT b.title, COUNT(b.title)
+                                                FROM post p, book b
+                                                WHERE p.isbn10 = b.isbn10
+                                                GROUP BY b.title
+                                                ORDER BY COUNT(b.title) DESC
+                                                LIMIT 5;""")
+        res_6 = db.execute(retrieval_command_6)
+        db.commit()
+        res_6 = res_6.fetchall()
+        frequently_posted  = [str(i[0]) for i in res_6]
+        stats['frequently_posted'] = frequently_posted 
+
+        # Top 5 books borrowed for the longest period of time
+        retrieval_command_7 = sqlalchemy.text(f"""SELECT DISTINCT(b2.title), temp2.duration
+                                                FROM
+                                                    (
+                                                    SELECT temp.post_id, (temp.end_date-temp.start_date) duration
+                                                    FROM 
+                                                        (
+                                                        SELECT b.post_id, b.transaction_date start_date, r.transaction_date end_date
+                                                        FROM 
+                                                            (SELECT * FROM transactions t1
+                                                            WHERE t1.type = 'borrow') AS b,
+                                                            (SELECT * FROM transactions t2
+                                                            WHERE t2.type = 'return') AS r
+                                                        WHERE b.borrower_email = r.borrower_email
+                                                        AND b.lender_email = r.lender_email
+                                                        AND b.post_id = r.post_id
+                                                        ) AS temp
+                                                    ORDER BY (temp.end_date-temp.start_date) DESC
+                                                    ) AS temp2,
+                                                    book b2,
+                                                    post p
+                                                WHERE temp2.post_id = p.post_id
+                                                AND p.isbn10 = b2.isbn10
+                                                ORDER BY temp2.duration DESC;""")
+        res_7 = db.execute(retrieval_command_7)
+        db.commit()
+        res_7 = res_7.fetchall()
+        longest = []
+        for i in res_7:
+            if i[0] not in longest:
+                longest.append(str(i[0]))
+        stats['longest'] = longest[0:5]
+
+        # Top 5 books borrowed for the shortest period of time
+        retrieval_command_8 = sqlalchemy.text(f"""SELECT DISTINCT(b2.title), temp2.duration
+                                                FROM
+                                                    (
+                                                    SELECT temp.post_id, (temp.end_date-temp.start_date) duration
+                                                    FROM 
+                                                        (
+                                                        SELECT b.post_id, b.transaction_date start_date, r.transaction_date end_date
+                                                        FROM 
+                                                            (SELECT * FROM transactions t1
+                                                            WHERE t1.type = 'borrow') AS b,
+                                                            (SELECT * FROM transactions t2
+                                                            WHERE t2.type = 'return') AS r
+                                                        WHERE b.borrower_email = r.borrower_email
+                                                        AND b.lender_email = r.lender_email
+                                                        AND b.post_id = r.post_id
+                                                        ) AS temp
+                                                    ORDER BY (temp.end_date-temp.start_date) DESC
+                                                    ) AS temp2,
+                                                    book b2,
+                                                    post p
+                                                WHERE temp2.post_id = p.post_id
+                                                AND p.isbn10 = b2.isbn10
+                                                ORDER BY temp2.duration ASC;""")
+        res_8 = db.execute(retrieval_command_8)
+        db.commit()
+        res_8 = res_8.fetchall()
+        shortest = []
+        for i in res_8:
+            if (i[0] not in shortest) and (i[0] not in longest[0:5]):
+                shortest.append(str(i[0]))
+        stats['shortest'] = shortest[0:5]
+
+        # For each genre in transactions, find the lender who lends most of it
+        retrieval_command_8 = sqlalchemy.text(f"""SELECT B.genre, A.username, B.email, B.count
+                                                FROM
+                                                    users AS A,
+                                                    (SELECT temp1.genre, temp2.email, temp2.count
+                                                    FROM 
+                                                        (SELECT temp.genre, MAX(temp.count)
+                                                        FROM 
+                                                            (SELECT one.genre, two.email, COUNT(two.email)
+                                                                FROM 
+                                                                    (SELECT b.genre
+                                                                    FROM book b
+                                                                    GROUP BY b.genre) AS one,
+
+                                                                    (SELECT b.genre, u.email
+                                                                    FROM book b, post p, transactions t, users u
+                                                                    WHERE b.isbn10 = p.isbn10 AND p.post_id=t.post_id AND u.email = t.lender_email
+                                                                    AND t.type = 'borrow') AS two
+                                                                WHERE one.genre = two.genre
+                                                            GROUP BY one.genre, two.email) AS temp
+                                                        GROUP BY temp.genre) AS temp1,
+                                                        (SELECT one.genre, two.email, COUNT(two.email)
+                                                                FROM 
+                                                                    (SELECT b.genre
+                                                                    FROM book b
+                                                                    GROUP BY b.genre) AS one,
+
+                                                                    (SELECT b.genre, u.email
+                                                                    FROM book b, post p, transactions t, users u
+                                                                    WHERE b.isbn10 = p.isbn10 AND p.post_id=t.post_id AND u.email = t.lender_email
+                                                                    AND t.type = 'borrow') AS two
+                                                                WHERE one.genre = two.genre
+                                                            GROUP BY one.genre, two.email) AS temp2
+                                                    WHERE temp1.genre = temp2.genre AND temp1.max = temp2.count) AS B
+                                                WHERE A.email = B.email;""")
+        res_8 = db.execute(retrieval_command_8)
+        db.commit()
+        res_8 = res_8.fetchall()
+        lends_most  = {}
+        for i in res_8:
+            lends_most[str(i[0])] = str(i[1])
+        stats['lends_most'] = lends_most
+
     except Exception as e:
         db.rollback()
 
