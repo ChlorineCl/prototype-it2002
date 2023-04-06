@@ -100,6 +100,8 @@ def home():
 def books():
     template = ('isbn10', 'title', 'authors', 'publisher', 'genre')
     allbooks = []
+
+    #get the genre list
     retrieval_command_3 = sqlalchemy.text(f"""SELECT b.genre, COUNT(b.genre) FROM book b 
                                                 GROUP BY b.genre
                                                 ORDER BY COUNT(b.genre) ;
@@ -116,19 +118,28 @@ def books():
     for i in most_pop_genres:
         if i not in most_pop_genres_unique:
             most_pop_genres_unique.append(i)
-    print(most_pop_genres_unique)
 
     if request.method == 'POST': #if there is a filter submission
         filters = request.form.getlist('genre_checkbox')
+        ordering = request.form.getlist('order_radio')
+        if ordering:
+            print("yis")
+        print(ordering)
         #appending all the genres to a string of query
-        if len(filters)!= 0:
+        if filters:
             genre = filters[0]
             strng = "SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
             for genre in filters[1:]:
                 newstr = "UNION SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
                 strng += newstr
-            strng = strng + ";"
-            print(strng)
+            
+        if ordering:
+            for ord in ordering:
+                newstr = "ORDER BY b.title " + ord 
+                strng += newstr
+        
+        strng = strng + ";"
+        print(strng)
         #doing the retrieval
         try:
             book_retrieval_command = sqlalchemy.text(strng)
