@@ -14,4 +14,39 @@
         </article>
     {% endfor %}
 {% endblock content%}
- 
+
+{% block filter %}
+    <h5>Let's get specific!</h5>
+    <form method="POST">
+        <h6>Search title</h6>
+        <input type="search" id="title-search" name="title_search">
+        <br>
+        <br>
+        <h6>Filter by availability</h6>
+        <input type="checkbox" value="ASC" name='order_radio' >Available
+        <br>
+        <input type="checkbox" value="DESC" name='order_radio' >Unavailable
+        <br>
+        <br>
+        <h6>Order by title</h6>
+        <input type="radio" value="ASC" name='order_radio' >A -> Z
+        <br>
+        <input type="radio" value="DESC" name='order_radio' >Z -> A
+        <br>
+        <br>
+        <h6>Order by popularity</h6>
+        <input type="radio" value="DESC" name='pops_radio' >Most popular
+        <br>
+        <input type="radio" value="ASC" name='pops_radio' >Least popular
+        <br>
+        <br>
+        <h6>Filter by genre</h6>
+        {% for i in genres %}
+            <input type="checkbox" value={{i}} name="genre_checkbox">{{ i }}
+            <br>
+        {% endfor %}
+        
+        <input type="submit" value="Apply Filter">
+        <input type="reset" >
+    </form>
+{% endblock filter %}
