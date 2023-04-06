@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h1>{{ "Hello There, " + current_user.username + " !" }}</h1>
+    <h1>{{ "Hello there, " + current_user.username + " !" }}</h1>
 
     <article class="media content-section">
         <div class="media-body">
@@ -32,3 +32,9 @@
         </article>
     {% endfor %}
 {% endblock content %} 
+
+{% block filter %}
+    <h5>{{ "You've been on this platform for " + no_days + " days!" }}</h5>
+    <p>Let's cherish every single day...</p>
+
+{% endblock filter %}

@@ -372,9 +372,21 @@ def account():
             db.rollback()
             return Response(str(e), 403)    
         post.append(result)
-    
-    
-    return render_template('account.html', title='Account', user_stats = user_stats, post=post)
+
+    #finding how many days the user has been active
+    creation_date_command = sqlalchemy.text(f"""SELECT creation_date FROM users u WHERE u.email = 'wbare0@ow.ly'""")
+    creation_res = db.execute(creation_date_command)
+    db.commit()
+    creation_date = creation_res.fetchall()
+
+    curr_date_command = sqlalchemy.text(f"""SELECT CAST(now() as date);""")
+    curr_res = db.execute(curr_date_command)
+    db.commit()
+    curr_date = curr_res.fetchall()
+    no_days = curr_date[0][0]-creation_date[0][0]
+    no_days = str(no_days.days)
+
+    return render_template('account.html', title='Account', user_stats = user_stats, post=post, no_days=no_days)
     
 #create post
 @app.route("/post/new", methods=['GET', 'POST'])
