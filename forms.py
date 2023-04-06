@@ -47,6 +47,18 @@ class AddBookForm(FlaskForm):
     genre = StringField('Genres', validators=[DataRequired()])
     submit = SubmitField('Add')
 
+class ISBN10Form(FlaskForm):
+    isbn10 = StringField('ISBN-10', validators=[DataRequired()])
+    submit = SubmitField('Update this book')
+
+class UpdateBookForm(FlaskForm):
+    isbn10 = StringField('ISBN-10', validators=[DataRequired()])
+    title = StringField('Title', validators=[DataRequired()])
+    authors = StringField('Authors', validators=[DataRequired()])
+    publisher = StringField('Publisher', validators=[DataRequired()])
+    genre = StringField('Genres', validators=[DataRequired()])
+    submit = SubmitField('Update')
+
 class DeleteBookForm(FlaskForm):
     isbn10 = StringField('ISBN-10', validators=[DataRequired()])
     submit = SubmitField('Delete')

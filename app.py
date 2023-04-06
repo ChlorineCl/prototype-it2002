@@ -16,7 +16,7 @@ from typing import Dict
 from datetime import date
 
 # Importing our register and login forms
-from forms import RegistrationForm, LoginForm, PostForm, UpdateForm, BorrowForm, ReturnForm, AddBookForm, DeleteBookForm
+from forms import RegistrationForm, LoginForm, PostForm, UpdateForm, BorrowForm, ReturnForm, AddBookForm, DeleteBookForm, ISBN10Form, UpdateBookForm
 
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -681,6 +681,59 @@ def add_book():
             db.rollback()
             return Response(str(e), 403)
     return render_template('add_book.html', title='Add a Book', form=form)
+
+@app.route("/update_book", methods=['GET', 'POST'])
+@login_required
+def update_book():
+    if current_user.id != 'group8@admin.nus':
+        flash('You are not authorised to access this page', 'danger')
+        return redirect(url_for('home'))
+    form = ISBN10Form()
+    if form.validate_on_submit():
+            retrieval_command = sqlalchemy.text(f"""SELECT * FROM book WHERE isbn10='{form.data['isbn10']}';""")
+            res = db.execute(retrieval_command)
+            db.commit()
+            retrieved_book = res.fetchone()
+            if retrieved_book:
+                return redirect(url_for('update_this_book', isbn10 = form.data['isbn10']))
+            else:
+                flash('This book does not exist. Please check.', 'danger')
+                return redirect(url_for('update_book'))
+    return render_template('update_book.html', title='Update a Book', form=form)
+
+@app.route("/update_book/<string:isbn10>", methods=['GET', 'POST'])
+@login_required
+def update_this_book(isbn10):
+    if current_user.id != 'group8@admin.nus':
+        flash('You are not authorised to access this page', 'danger')
+        return redirect(url_for('home'))
+    
+
+    retrieval_command = sqlalchemy.text(f"""SELECT * FROM book WHERE isbn10='{isbn10}';""")
+    res = db.execute(retrieval_command)
+    db.commit()
+    retrieved_book = res.fetchone()
+
+    form = UpdateBookForm()
+
+    if form.validate_on_submit():
+        try:
+            update_command = sqlalchemy.text(f"""UPDATE book SET isbn10 = '{form.data['isbn10']}', 
+                                                             title = '{form.data['title']}',
+                                                             authors = '{form.data['authors']}',
+                                                             publisher = '{form.data['publisher']}',
+                                                             genre = '{form.data['genre']}'
+                                                             WHERE isbn10='{isbn10}';""")
+            db.execute(update_command)
+            db.commit()
+            flash(f'Book updated for {isbn10} successfully!', 'success')
+            return redirect(url_for('manage_books'))
+        except Exception as e:
+            db.rollback()
+            return Response(str(e), 403)
+    return render_template('update_this_book.html', title='Update the details for this Book', form=form)
+
+    
 
 @app.route("/delete_book", methods=['GET', 'POST'])
 @login_required

@@ -1,0 +1,79 @@
+{%extends "layout.html" %} 
+{% block content %}
+    <div class = "content-section">
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Update this Book's Details</legend>
+                <div class="form-group">
+                    {{ form.isbn10.label(class="form-control-label") }}
+                    {% if form.isbn10.errors %}
+                        {{ form.isbn10(class="form-control form-control-lg is-invalid")}}
+                        <div class="invalid-feedback">
+                            {% for error in form.isbn10.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.isbn10(class="form-control form-control-lg") }}
+                    {% endif %}  
+                </div>
+                <div class="form-group">
+                    {{ form.title.label(class="form-control-label") }}
+                    {% if form.title.errors %}
+                        {{ form.title(class="form-control form-control-lg is-invalid")}}
+                        <div class="invalid-feedback">
+                            {% for error in form.title.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.title(class="form-control form-control-lg") }}
+                    {% endif %}                   
+                </div>
+                <div class="form-group">
+                    {{ form.authors.label(class="form-control-label") }}
+                    {% if form.authors.errors %}
+                        {{ form.authors(class="form-control form-control-lg is-invalid")}}
+                        <div class="invalid-feedback">
+                            {% for error in form.authors.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.authors(class="form-control form-control-lg") }}
+                    {% endif %}  
+                </div>
+                <div class="form-group">
+                    {{ form.publisher.label(class="form-control-label") }}
+                    {% if form.publisher.errors %}
+                        {{ form.publisher(class="form-control form-control-lg is-invalid")}}
+                        <div class="invalid-feedback">
+                            {% for error in form.publisher.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.publisher(class="form-control form-control-lg") }}
+                    {% endif %}  
+                </div>
+                <div class="form-group">
+                    {{ form.genre.label(class="form-control-label") }}
+                    {% if form.genre.errors %}
+                        {{ form.genre(class="form-control form-control-lg is-invalid")}}
+                        <div class="invalid-feedback">
+                            {% for error in form.genre.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.genre(class="form-control form-control-lg") }}
+                    {% endif %}  
+                </div>
+            </fieldset>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-outline-info") }}
+            </div>
+        </form>
+    </div>
+{% endblock content%}
