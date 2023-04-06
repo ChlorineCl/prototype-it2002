@@ -122,22 +122,39 @@ def books():
     if request.method == 'POST': #if there is a filter submission
         filters = request.form.getlist('genre_checkbox')
         ordering = request.form.getlist('order_radio')
-        if ordering:
-            print("yis")
-        print(ordering)
+        pops = request.form.getlist('pops_radio')
+
+        if pops:
+            newstr1 ="""SELECT b.isbn10, b.title, b.authors, b.publisher, b.genre
+                            FROM post p, transactions t, book b
+                            WHERE p.post_id = t.post_id AND p.isbn10 = b.isbn10 AND t.type = 'borrow'"""
+            newstr2 = ""
+            newstr3 = """ GROUP BY b.isbn10
+                            ORDER BY COUNT(b.isbn10) """ + pops[0] 
+            newstr4 = ""
+            if filters:
+                genre = filters[0]
+                newstr2 = "AND (b.genre LIKE '%" + genre + "%' "
+                for genre in filters[1:]:
+                    newstr2 += "OR b.genre LIKE '%" + genre + "%' "
+                newstr2 += ") "
+            if ordering:
+                newstr4 = ", b.title " + ordering[0]
+            strng = newstr1 + newstr2 + newstr3 + newstr4
+            
         #appending all the genres to a string of query
-        if filters:
-            genre = filters[0]
-            strng = "SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
-            for genre in filters[1:]:
-                newstr = "UNION SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
+        else:
+            if filters:
+                genre = filters[0]
+                strng = "SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
+                for genre in filters[1:]:
+                    newstr = "UNION SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
+                    strng += newstr
+                
+            if ordering:
+                newstr = "ORDER BY b.title " + ordering[0]
                 strng += newstr
             
-        if ordering:
-            for ord in ordering:
-                newstr = "ORDER BY b.title " + ord 
-                strng += newstr
-        
         strng = strng + ";"
         print(strng)
         #doing the retrieval
@@ -599,10 +616,10 @@ def stats():
     
     try:
         # Top 5 most popz books
-        retrieval_command_1 = sqlalchemy.text(f"""SELECT b.title, COUNT(b.title) FROM post p, transactions t, book b
+        retrieval_command_1 = sqlalchemy.text(f"""SELECT b.title, COUNT(b.isbn10) FROM post p, transactions t, book b
                                                 WHERE p.post_id = t.post_id AND p.isbn10 = b.isbn10 AND t.type = 'borrow'
-                                                GROUP BY b.title
-                                                ORDER BY COUNT(b.title) DESC
+                                                GROUP BY b.isbn10
+                                                ORDER BY COUNT(b.isbn10) DESC
                                                 LIMIT 5;;""")
         res_1 = db.execute(retrieval_command_1)
         db.commit()
@@ -672,11 +689,11 @@ def stats():
         stats['top_lenders'] = top_lenders
 
         # Top 5 most frequently posted books
-        retrieval_command_6 = sqlalchemy.text(f"""SELECT b.title, COUNT(b.title)
+        retrieval_command_6 = sqlalchemy.text(f"""SELECT b.title, COUNT(b.isbn10)
                                                 FROM post p, book b
                                                 WHERE p.isbn10 = b.isbn10
-                                                GROUP BY b.title
-                                                ORDER BY COUNT(b.title) DESC
+                                                GROUP BY b.isbn10
+                                                ORDER BY COUNT(b.isbn10) DESC
                                                 LIMIT 5;""")
         res_6 = db.execute(retrieval_command_6)
         db.commit()
