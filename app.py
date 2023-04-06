@@ -406,6 +406,7 @@ def post(post_id):
                                                         FROM post p , (SELECT t.borrower_email, t.post_id, t.type
                                                                         FROM transactions t
                                                                         WHERE t.borrower_email = '{current_user.id}'
+                                                                        AND t.post_id = {post_id}
                                                                         ORDER BY transaction_id DESC LIMIT 1 ) AS latest_transaction
                                                         WHERE p.post_id = latest_transaction.post_id 
                                                         AND latest_transaction.type = 'borrow';""")
@@ -551,10 +552,16 @@ def return_post():
     allposts = []
     try:
         post_retrieval_command = sqlalchemy.text(f"""SELECT p.post_id, p.owner, p.isbn10, p.availability, p.post_date 
-                                                    FROM post p , (SELECT t.post_id, t.type
+                                                    FROM post p , ( SELECT * 
                                                                     FROM transactions t
-                                                                    WHERE t.borrower_email = 'wbare0@ow.ly'
-                                                                    ORDER BY transaction_id DESC LIMIT 1 ) AS latest_transaction
+                                                                    WHERE t.borrower_email = '{current_user.id}'
+                                                                    AND t.type = 'borrow'
+                                                                    AND NOT EXISTS( SELECT *
+                                                                                    FROM transactions t1
+                                                                                    WHERE t1.borrower_email = t.borrower_email
+                                                                                    AND t.post_id = t1.post_id
+                                                                                    AND t1.transaction_id > t.transaction_id
+                                                                                    AND t1.type = 'return')) AS latest_transaction
                                                     WHERE p.post_id = latest_transaction.post_id 
                                                     AND latest_transaction.type = 'borrow';""")
         post_res = db.execute(post_retrieval_command)  

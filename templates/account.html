@@ -4,7 +4,7 @@
 
     <article class="media content-section">
         <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Books You've Currently Borrwoed" }}</a></h2>
+        <h2><a class="article-title" href="#">{{ "Books You've Currently Borrowed" }}</a></h2>
         <p class="article-content">{% for i in user_stats['books_borrowed'] %} {{ "ISBN10: " + i[0] + ",   " + "Title: " + i[1] }} 
         {% endfor %} </p> 
     </div>
