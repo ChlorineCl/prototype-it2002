@@ -94,6 +94,7 @@ def home():
             allposts = post_res.fetchall()
         except Exception as e:
             db.rollback()
+            return Response(str(e), 403)
 
             
     else: #if there is no filters
@@ -104,6 +105,7 @@ def home():
             allposts = post_res.fetchall()
         except Exception as e:
             db.rollback()
+            return Response(str(e), 403)
 
     def convert_to_dict(tuple1, tuple2):
         resultDictionary = {tuple1[i] : tuple2[i] for i, _ in enumerate(tuple2)}
@@ -121,7 +123,8 @@ def home():
             thetitle = retrieved_res.fetchall()
             result['title'] = thetitle[0][0]
         except Exception as e:
-            db.rollback()    
+            db.rollback()
+            return Response(str(e), 403)    
         post.append(result)
     return render_template('home.html', post=post, title='Home')
 
@@ -205,6 +208,7 @@ def books():
             allbooks = book_res.fetchall()
         except Exception as e:
             db.rollback()
+            return Response(str(e), 403)
 
     #if no filter submission
     else:
@@ -291,56 +295,85 @@ def logout():
 @login_required
 def account():
     user_stats = {}
-    id = current_user.id
     
     # Books that current user is currently borrowing
-    retrieval_command_1 = sqlalchemy.text(f"""SELECT one.borrower_email, one.isbn10, one.title
-                                            FROM 
-                                                (SELECT t.borrower_email, b.isbn10, b.title
-                                                FROM transactions t, post p, book b
-                                                WHERE t.post_id = p.post_id AND p.isbn10 = b.isbn10
-                                                AND t.borrower_email = '{ id }'
-                                                AND t.type = 'borrow') AS one
-                                            WHERE NOT EXISTS (SELECT t.borrower_email, b.isbn10, b.title
-                                                FROM transactions t, post p, book b
-                                                WHERE t.post_id = p.post_id AND p.isbn10 = b.isbn10
-                                                AND t.borrower_email = '{ id }'
-                                                AND t.type = 'return')
-                                                GROUP BY one.borrower_email, one.isbn10, one.title;""") 
+    retrieval_command_1 = sqlalchemy.text(f"""SELECT p.isbn10, b.title 
+                                                    FROM book b, post p , ( SELECT * 
+                                                                    FROM transactions t
+                                                                    WHERE t.borrower_email = '{current_user.id}'
+                                                                    AND t.type = 'borrow'
+                                                                    AND NOT EXISTS( SELECT *
+                                                                                    FROM transactions t1
+                                                                                    WHERE t1.borrower_email = t.borrower_email
+                                                                                    AND t.post_id = t1.post_id
+                                                                                    AND t1.transaction_id > t.transaction_id
+                                                                                    AND t1.type = 'return')) AS latest_transaction
+                                                    WHERE p.post_id = latest_transaction.post_id
+                                                    AND b.isbn10 = p.isbn10 
+                                                    AND latest_transaction.type = 'borrow';""") 
     res_1 = db.execute(retrieval_command_1)
     db.commit()
     res_1 = res_1.fetchall()
     books = []
     for i in res_1:
-        book = [str(i[1]), str(i[2])]
+        book = [str(i[0]), str(i[1])]
         books.append(book)
     user_stats['books_borrowed'] = books
 
     # Books that current user is currently lending
-    retrieval_command_2 = sqlalchemy.text(f"""SELECT one.lender_email, one.isbn10, one.title
-                                            FROM 
-                                                (SELECT t.lender_email, b.isbn10, b.title
-                                                FROM transactions t, post p, book b
-                                                WHERE t.post_id = p.post_id AND p.isbn10 = b.isbn10
-                                                AND t.lender_email = '{ id }'
-                                                AND t.type = 'borrow'
-                                                ) AS one
-                                            WHERE NOT EXISTS (SELECT t.lender_email, b.isbn10, b.title
-                                                FROM transactions t, post p, book b
-                                                WHERE t.post_id = p.post_id AND p.isbn10 = b.isbn10
-                                                AND t.lender_email = '{ id }'
-                                                AND t.type = 'return')
-                                            GROUP BY one.lender_email, one.isbn10, one.title;""") 
+    retrieval_command_2 = sqlalchemy.text(f"""SELECT latest_transaction.borrower_email, p.isbn10, b.title 
+                                                    FROM book b, post p , ( SELECT * 
+                                                                    FROM transactions t
+                                                                    WHERE t.lender_email = '{current_user.id}'
+                                                                    AND t.type = 'borrow'
+                                                                    AND NOT EXISTS( SELECT *
+                                                                                    FROM transactions t1
+                                                                                    WHERE t1.lender_email = t.lender_email
+                                                                                    AND t.post_id = t1.post_id
+                                                                                    AND t1.transaction_id > t.transaction_id
+                                                                                    AND t1.type = 'return')) AS latest_transaction
+                                                    WHERE p.post_id = latest_transaction.post_id
+                                                    AND b.isbn10 = p.isbn10 
+                                                    AND latest_transaction.type = 'borrow';""") 
     res_2 = db.execute(retrieval_command_2)
     db.commit()
     res_2 = res_2.fetchall()
     books2 = []
     for i in res_2:
-        book2 = [str(i[1]), str(i[2])]
+        book2 = [str(i[0]), str(i[1]), str(i[2])]
         books2.append(book2)
     user_stats['books_lended'] = books2
+
+    # posts made by the user
+    retrieval_command_3 = sqlalchemy.text(f"""SELECT * FROM post WHERE owner = '{current_user.id}' ORDER BY post_date DESC ;""")
+    res_3 = db.execute(retrieval_command_3)
+    db.commit()
+    res_3 = res_3.fetchall()
+
+    template = ('post_id', 'owner', 'isbn10', 'availability', 'date_posted')
+
+    def convert_to_dict(tuple1, tuple2):
+            resultDictionary = {tuple1[i] : tuple2[i] for i, _ in enumerate(tuple2)}
+            return(resultDictionary)
+    post = []
+
+    for i in res_3:
+        i = i[0:4] + (i[4].strftime("%Y-%m-%d"),)
+        i = tuple(map(str, i))
+        result = convert_to_dict(template, i)
+        try:
+            title_retrieval_command = sqlalchemy.text(f"""SELECT b.title FROM book b WHERE b.isbn10 = '{result['isbn10']}';""")
+            retrieved_res = db.execute(title_retrieval_command)
+            db.commit()
+            thetitle = retrieved_res.fetchall()
+            result['title'] = thetitle[0][0]
+        except Exception as e:
+            db.rollback()
+            return Response(str(e), 403)    
+        post.append(result)
     
-    return render_template('account.html', title='Account', user_stats = user_stats)
+    
+    return render_template('account.html', title='Account', user_stats = user_stats, post=post)
     
 #create post
 @app.route("/post/new", methods=['GET', 'POST'])
@@ -1199,97 +1232,4 @@ if __name__ == "__main__":
 
 
 
-# ##create post
-# @app.route("/create_post", methods=['GET', 'POST'])
-
-# @login_required # Adding login_required decorator to ensure only logged in users can access this route
-# def create_post():
-#     form = PostForm() # initialize PostForm
-#     user_id = current_user.id # get the current user's id
-#     if form.validate_on_submit(): # if the form has been submitted and validated
-#         try:
-#             # insert the new post to the post table
-#             insertion_command = sqlalchemy.text(f"""INSERT INTO post (owner, isbn10, availability, post_date) 
-#                                                     VALUES ('{user_id}', '{form.isbn10.data}', '{form.availability.data}', '{date.today()}');""")
-#             db.execute(insertion_command) # execute the SQL command
-#             db.commit() # commit the transaction
-#             flash(f'Post created for {form.title.data} successfully!', 'success') # flash a success message
-#             return redirect(url_for('home')) # redirect to the home page
-#         except Exception as e:
-#             db.rollback() # rollback the transaction if an exception occurred
-#             return Response(str(e), 403) # return a 403 Forbidden response if an exception occurred
-#     return render_template('create_post.html', title='Create Post', form=form) # render the create_post.html template with the PostForm object
-
-# @app.route("/post/<int:post_id>")
-# @login_required # Adding login_required decorator to ensure only logged in users can access this route
-# def post(post_id):
-#     form = PostForm() # initialize PostForm
-#     user_id = current_user.id     #get the current user's id 
-#     result = db.execute(f"""SELECT id FROM post WHERE owner='{user_id}' AND isbn10='{form.isbn10.data}' AND availability='{form.availability.data}' AND post_date='{date.today()}' ORDER BY id DESC LIMIT 1;""")
-#     post = result.fetchone()[0] # get the post with the specified id
-#     return render_template('create_post.html', title=post.title, post=post) # render the create_post.html template with the post object
-
-# # Update post route
-# @app.route("/create_post/<int:post_id>/update", methods=['POST'])
-# @login_required
-# def update_post(post_id):
-#     # Get the current user ID
-#     user_id = current_user.id
-    
-#     # Get the post ID from the database based on the current user, ISBN10, availability, and post date
-#     result = db.execute(f"""SELECT id FROM post WHERE owner='{user_id}' AND isbn10='{form.isbn10.data}' AND availability='{form.availability.data}' AND post_date='{date.today()}' ORDER BY id DESC LIMIT 1;""")
-#     post = result.fetchone()[0]
-    
-#     # Create a PostForm instance
-#     form = PostForm()
-
-#     if form.validate_on_submit() and current_user.is_authenticated and post.owner == current_user.id:
-#         try:
-#             # Update the post attributes with the new values
-#             post.isbn10 = form.isbn10.data
-#             post.availability = form.availability.data
-#             post.last_updated = datetime.now()
-            
-#             # Commit the changes to the database
-#             db.session.commit()
-            
-#             # Show a success message and redirect to the home page
-#             flash(f'Post updated for {form.title.data} successfully!', 'success')
-#             return redirect(url_for('home'))
-        
-#         except Exception as e:
-#             # If there was an error, rollback the transaction and return a 403 error
-#             db.session.rollback()
-#             return Response(str(e), 403)
-
-#     # If the current user is not the owner of the post, show an error message and redirect to the home page
-#     elif post.owner != current_user.id:
-#         flash('You are not authorized to update this post', 'danger')
-#         return redirect(url_for('home'))
-    
-#     # If the request method is GET, set the form values to the current post attributes
-#     elif request.method == 'GET':
-#         form.isbn10.data = post.isbn10
-#         form.availability.data = post.availability
-    
-#     # Render the create_post.html template with the title "Update Post" and the PostForm instance
-#     return render_template('create_post.html', title='Update Post', form=form)
-
-#  # Delete post route
-# @app.route("/create_post/<int:post_id>/delete_post", methods=['POST'])
-# @login_required 
-# def delete_post(post_id):
-#     try:
-#         # Delete the post with the specified post_id from the database
-#         deletion_command = sqlalchemy.text(f"""DELETE FROM post WHERE id='{post_id}'""")
-#         db.execute(deletion_command)
-#         db.commit()
-        
-#         # Show a success message and redirect to the home page
-#         flash(f'Post with ID {post_id} has been deleted successfully!', 'success')
-    
-#     except Exception as e:
-#         # If there was an error, rollback the transaction and return a 403 error
-#         db.rollback()
-#         return Response(str(e), 403)
 

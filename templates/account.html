@@ -4,7 +4,7 @@
 
     <article class="media content-section">
         <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Books You've Currently Borrowed" }}</a></h2>
+        <h4><a class="article-title" href="#">{{ "Books You've Currently Borrowed" }}</a></h4>
         <p class="article-content">{% for i in user_stats['books_borrowed'] %} {{ "ISBN10: " + i[0] + ",   " + "Title: " + i[1] }} 
         {% endfor %} </p> 
     </div>
@@ -12,9 +12,23 @@
 
     <article class="media content-section">
         <div class="media-body">
-        <h2><a class="article-title" href="#">{{ "Books You've Currently Lended" }}</a></h2>
-        <p class="article-content">{% for i in user_stats['books_lended'] %} {{ "ISBN10: " + i[0] + ",   " + "Title: " + i[1] }} 
+        <h4><a class="article-title" href="#">{{ "Books You've Currently Lended" }}</a></h4>
+        <p class="article-content">{% for i in user_stats['books_lended'] %} {{ "Borrower: " + i[0] + ",   " + "ISBN10: " + i[1] + ",   " + "Title: " + i[2] }} 
         {% endfor %} </p> 
     </div>
     </article>
+
+    <h2>Posts made by you</h2>
+    {% for i in post %}
+        <article class="media content-section">
+            <div class="media-body">
+            <div class="article-metadata">
+                <a class="mr-2" href="#">{{ i['owner'] }}</a>
+                <small class="text-muted">{{ i['date_posted'] }}</small>
+            </div>
+            <h2><a class="article-title" href="{{ url_for('post', post_id = i['post_id']) }}">{{ i['title'] }}</a></h2>
+            <p class="article-content">{{ "Post ID: " + i['post_id'] + ", ISBN10: " + i['isbn10'] + ", Availability: " + i['availability']}}</p>
+            </div>
+        </article>
+    {% endfor %}
 {% endblock content %} 
