@@ -159,6 +159,7 @@ def books():
         title = request.form.getlist('title_search')
 
         if pops:
+            strng = ""
             newstr1 ="""SELECT b.isbn10, b.title, b.authors, b.publisher, b.genre
                             FROM post p, transactions t, book b
                             WHERE p.post_id = t.post_id AND p.isbn10 = b.isbn10 AND t.type = 'borrow'"""
@@ -196,6 +197,7 @@ def books():
                     strng = "SELECT * FROM book b WHERE b.title LIKE '%" + title[0] + "%' "
 
             if ordering:
+                strng = "SELECT * FROM book b " 
                 newstr = "ORDER BY b.title " + ordering[0]
                 strng += newstr    
         strng = strng + ";"
@@ -491,9 +493,10 @@ def update_post(post_id):
                     res2 = db.execute(retrieve_command)
                     db.commit()
                     res2 = res2.fetchone()
-                    if res2[0] == 'borrow':
-                        flash(f'You cannot update the availability of a post while the book is borrowed!', 'danger')
-                        return redirect(url_for('post', post_id = post_id))
+                    if res2:
+                        if res2[0] == 'borrow':
+                            flash(f'You cannot update the availability of a post while the book is borrowed!', 'danger')
+                            return redirect(url_for('post', post_id = post_id))
                 try:
                     update_command = sqlalchemy.text(f"""UPDATE post SET availability = '{form.data['availability']}' WHERE post_id='{post_id}';""")
                     db.execute(update_command)
@@ -672,7 +675,7 @@ def return_book(post_id):
                     flash('You cannot return books owned by you', 'danger')
                     return redirect(url_for('post', post_id = post_id))
                 
-                retrieve_borrower = sqlalchemy.text(f"""SELECT borrower_email FROM transactions WHERE post_id='{post_id}';""")
+                retrieve_borrower = sqlalchemy.text(f"""SELECT borrower_email FROM transactions WHERE post_id='{post_id}' ORDER BY transaction_id DESC LIMIT 1;""")
                 resb = db.execute(retrieve_borrower)
                 db.commit()
                 retrieved_borrower = resb.fetchone()
@@ -1259,7 +1262,7 @@ def create_app():
 
 
 # ? The port where the debuggable DB management API is served
-PORT = 2223
+PORT = 2222
 
 # ? Running the flask app on the localhost/0.0.0.0, port 2222
 # ? Note that you may change the port, then update it in the view application too to make it work (don't if you don't have another application occupying it)
