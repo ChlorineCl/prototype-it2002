@@ -75,7 +75,7 @@ def home():
         ordering = request.form.getlist('order_radio')
 
         str1 = "SELECT p.post_id, p.owner, p.isbn10, p.availability, p.post_date FROM post p, book b WHERE p.isbn10 = b.isbn10 "
-        if title:
+        if title[0] != "":
             str1 += "AND  b.title LIKE '%" + title[0] + "%' "
         if availability:
             str1 += "AND p.availability = " + availability[0] + " "
@@ -86,7 +86,6 @@ def home():
         else:
             if ordering:
                 str1 += "ORDER BY b.title " + ordering[0]
-        # print(str1)
 
         try:
             post_retrieval_command = sqlalchemy.text(str1)
@@ -174,11 +173,12 @@ def books():
                 for genre in filters[1:]:
                     newstr2 += "OR b.genre LIKE '%" + genre + "%' "
                 newstr2 += ") "
-            if title:
+            if title[0] != "":
                 newstr21 = "AND b.title LIKE '%" + title[0] + "%' "
             if ordering:
                 newstr4 = ", b.title " + ordering[0]
             strng = newstr1 + newstr2 + newstr21 + newstr3 + newstr4
+            
             
         #appending all the genres to a string of query
         else:
@@ -189,7 +189,7 @@ def books():
                     newstr = "UNION SELECT * FROM book b WHERE b.genre LIKE '%" + genre + "%' "
                     strng += newstr
                 
-            if title:
+            if title[0] != "":
                 if filters:
                     strng += "INTERSECT SELECT * FROM book b WHERE b.title LIKE '%" + title[0] + "%' "
                 else:
@@ -197,8 +197,7 @@ def books():
 
             if ordering:
                 newstr = "ORDER BY b.title " + ordering[0]
-                strng += newstr
-            
+                strng += newstr    
         strng = strng + ";"
         #print(strng) 
         #doing the retrieval
