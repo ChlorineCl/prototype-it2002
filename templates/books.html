@@ -1,6 +1,7 @@
 {%extends "layout.html" %}
 {% block content %}
     <h1>Book List</h1>
+    <p>These are the list of books registered in our system! To borrow books, check out the <a href=borrow>Borrow</a> page.</p>
     {% for i in books %}
         <article class="media content-section">
             <div class="media-body">

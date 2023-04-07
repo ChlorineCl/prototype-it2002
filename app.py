@@ -486,6 +486,14 @@ def update_post(post_id):
             form = UpdateForm()
             form.isbn10.data = retrieved_post[2]
             if form.validate_on_submit():
+                if form.data['availability'] == True:
+                    retrieve_command = sqlalchemy.text(f"""SELECT t.type FROM transactions t WHERE post_id='{post_id}' ORDER BY transaction_id DESC LIMIT 1;""")
+                    res2 = db.execute(retrieve_command)
+                    db.commit()
+                    res2 = res2.fetchone()
+                    if res2[0] == 'borrow':
+                        flash(f'You cannot update the availability of a post while the book is borrowed!', 'danger')
+                        return redirect(url_for('post', post_id = post_id))
                 try:
                     update_command = sqlalchemy.text(f"""UPDATE post SET availability = '{form.data['availability']}' WHERE post_id='{post_id}';""")
                     db.execute(update_command)
